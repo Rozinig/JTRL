@@ -11,6 +11,9 @@ To start Vitural Enviroment
 source .env/bin/activate
 
 
+to start program with flask
+flask --app main run
+
 Layout
 
 JTRL
@@ -58,6 +61,9 @@ Tatoeba Corpus
 
 https://spacy.io/usage
 https://pypi.org/project/deep-translator/
+https://www.olivieraubert.net/vlc/python-ctypes/doc/index.html  for vlc
+https://www.tutorialspoint.com/flask/flask_application.htm
+https://tatoeba.org/en/downloads
 Rebuild virtual Environment
 
 python -m venv .env
@@ -67,7 +73,9 @@ pip install -U spacy
 python -m spacy download en_core_web_sm		
 python -m spacy download ja_core_news_sm
 pip install -U deep-translator
-
+pip install wget
+pip install python-vlc
+pip install Flask
 
 
 
