@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Sign Up</h3>
+    <div class="box">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}. Go to <a href="{{ url_for('login') }}">login page</a>.
+            </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="/signup">
+            <label for="email">Email</label>
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="email" id ="email" name="email" placeholder="example@domain.com" autofocus="" title="Email">
+                </div>
+            </div>
+            <p></p>
+
+            <label for="password">Password</label>
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" id="password" name="password" placeholder="Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Password">
+                </div>
+            </div>
+            <p></p>
+
+            <button class="button is-block is-info is-large is-fullwidth">Sign Up</button>
+
+        </form>
+        <div id="message">
+          <h3>Password must contain the following:</h3>
+          <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
+          <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
+          <p id="number" class="invalid">A <b>number</b></p>
+          <p id="length" class="invalid">Minimum <b>8 characters</b></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

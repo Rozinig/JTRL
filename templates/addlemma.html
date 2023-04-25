@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+    <h1>{% block title %} Add Known Words {% endblock %}</h1>
+
+        <form method="POST" action="/lemma/add">
+            <div class="field">
+                <div class="control">
+                    <textarea  name="words" placeholder="Individual words, phases, or sentences" style="height:400px"></textarea>
+                </div>
+            </div>
+            <input type="submit" value="Add Words">
+        </form>
+    </div>
+{% endblock %}

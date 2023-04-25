@@ -1,0 +1,7 @@
+{
+	"SECRET_KEY":"192b9bdd22abaed4d12e236c77afcb9a383ec15f71bbf5dc987d54727823bcbf"	,
+	"NATIVE":"eng",
+	"TARGET":"jpn",
+	"USER":"william",
+	"SQLALCHEMY_DATABASE_URI":"sqlite:///auth.db"
+}

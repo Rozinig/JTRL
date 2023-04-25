@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="work">
+    <h1>{% block title %} Practice {% endblock %}</h1>
+    <div id="audio">
+        {% for audiofile in audiofiles %}
+        <audio controls autoplay>
+            <source src="{{audiofile}}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        {% endfor %}
+    </div> 
+    <div id="text">
+        <h2>
+            {{text}}
+        </h2>
+    </div> 
+         <button onclick="myFunction()">Show English</button>
+    <div id="translation">
+      <h3>{{translation}}</h3>
+    </div> 
+    <div id="translation space">
+      <h3>|</h3>
+    </div> 
+    <div class="action">
+        <form action="" method="POST"><button class="button" type="submit" name="next" value="{{senid}}">Next Sentence</button></form>
+    </div>
+</div>
+<script>
+    var x = document.getElementById("translation");
+    var y = document.getElementById("translation space");
+    x.style.display = "none";
+    function myFunction() {
+      if (x.style.display === "none") {
+        x.style.display = "block";
+        y.style.display = "none";
+      } else {
+        x.style.display = "none";
+        y.style.display = "block";
+      }
+    }
+</script>
+
+{% endblock %}
+
+
+{% block javascript %}
+{% endblock %}
