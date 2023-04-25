@@ -1,9 +1,40 @@
-from flask import Flask
+from flask import Flask, render_template, redirect, url_for, request, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from markupsafe import escape
 from database import *
+#from user import *
 import time
+import json
+import os
 
+db = SQLAlchemy()
 app = Flask(__name__)
+app.config.from_file("config.json", load=json.load)
+db.init_app(app)
+
+targetlang = 'jpn'#TODO get rid of static values
+user = 'william'
+nativelang = 'eng'
+
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+	return User.query.get(int(user_id))
+
+class User(UserMixin, db.Model): #UserMixin, 
+	id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
+	email = db.Column(db.String(100), unique=True)
+	password = db.Column(db.String(100))
+	emailauth = db.Column(db.Integer)
+	authdate = db.Column(db.String(100))
+#if (os.path.isfile('./instance/auth.db')):
+with app.app_context():
+	db.create_all()
 
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -11,7 +42,9 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 ch.setFormatter(formatter)
 
-fh = logging.FileHandler('main.log')
+if (not os.path.exists('./logs/')):
+	os.mkdir('./logs/')
+fh = logging.FileHandler('./logs/main.log')
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 
@@ -25,93 +58,151 @@ databaselogger.addHandler(ch)
 databaselogger.addHandler(fh)
 
 
-
-nativelang = 'eng'
-targetlang = 'jpn'
-user = 'william'
-
-header = '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>p {  width: 300px; word-wrap: break-word;    font-size: 20px;} button {font-size:20px;} </style>'
-
-
-if (0):
+if (not os.path.exists('./lang/all_lang.db')):
+	targetlang = 'jpn'
 	print('rebuilding database')
 	t = time.time()
 	loadlang(targetlang)
-	loadlang(nativelang)
+	loadaux('tags')
+	loadaux('links')
+	loadaux('sentences_with_audio') #need to exclude Create commons
+	processlangjson(targetlang)
 	print(time.time()-t)
 
 
-
-'''tes = ["私は眠らなければなりません。", "きみにちょっとしたものをもってきたよ。", "何かしてみましょう。", "何してるの？", "今日は６月１８日で、ムーリエルの誕生日です！"]
-for test in tes: 
-	database.addlemma(test, targetlang, user)
-database.updatelemma("は", targetlang, user)
-database.removelemma("は", targetlang, user)
-
-print(database.getgoogle(1297, targetlang, nativelang))
-x = database.getaudioids(4704)
-print(database.gettags(4704))
-print(database.gettranslations(1297, nativelang))
-print(database.gettranslations(4703, nativelang))
-database.processsentences(targetlang, user)
-print(database.picknextsentence(targetlang, user))
-print(database.marksentence(num, targetlang, user))
-print(database.getoldestlemma(targetlang, user, 10))
-print(database.getlemmainfo("は", targetlang, user))
-print(database.pickrandomsentence(targetlang, user))
-print(database.pickoldestlemmasentence(targetlang, user))
-print(database.gettext(4704, targetlang))
-y = database.getaudiofile(x[0])
-database.playaudio(y)
-test = dictionary.define()
-for things in test:
-	print(things)'''
+langs = {'cat','Catalan', 'cmn','Chinese (mandarin i think)', 'hrv','Croatian',
+'dan','Danish', 'nld','Dutch', 'eng','English', 'fin','Finnish', 'fra','French', 'deu','German',
+'ell','Greek', 'ita','Italian', 'jpn','Japanese', 'kor','Korean', 'lit','Lithuanian', 'mkd','Macedonian',
+'nob','Norwegian Bokmal', 'pol','Polish', 'por','Portuguese', 'ron','Romanian', 'rus','Russian', 'spa','Spanish',
+'swe','Swedish', 'ukr','Ukrainian'}
 
 
-    
+
+
 @app.route("/")
+@app.route("/home")
 def home():
-	updatelemma("は", targetlang, user)
-	x = picknextsentence(targetlang,user)
-	y = gettext(x, targetlang)
-	logger.warning('home')
-	return header + f'<p>test {x}, {y}</p>'
+	if (current_user.is_authenticated):
+		return render_template("userhome.html")
+	else:
+		return render_template("otherhome.html")
 
-@app.route("/<lang>")
-def lang(lang):
-	lang=escape(lang)
-	return header + f'<p>{lang}test</p>'
+@app.route("/about/")
+def about():
+	return render_template("about.html")
 
-@app.route("/rebuild/<lang>")
-def rebuildlang(lang):
-	lang=escape(lang)
-	return header + f'<p>rebuild {lang}</p>'
+@app.route("/lemma/")
+@login_required
+def lemma():
+	return render_template("lemma.html")
 
-@app.route("/rebuild/base")
-def rebuildbase():
-	#x = loadaux('sentences_with_audio') #not limited to creative commons
-	#y = loadaux('tags')
-	#z = loadaux('links')
-	return header + f'<p>test</p>'
+@app.route("/lemma/add/")
+@login_required
+def addinglemma():
+	return render_template("addlemma.html")
 
-@app.route("/rebuild")
-def rebuild():
-	return header + '<p>Do you want to rebuild stuff?</p>'
+@app.route("/lemma/add/", methods=['POST'])
+@login_required
+def lemmaadded():
+	words = request.form.get('words')
+	addlemma(words, targetlang, current_user.id)
+	processsentencesjson(targetlang, current_user.id)
+	return render_template("lemmaadded.html")
 
-#initialize
-	#if all sentences db doesn't exist do that
-	#option to add known words
-	#show known grammar optionshttps://tatoeba.org/audio/download/1682
-	#update avaible sentence db
-	#option to practice
-	#show one missing lemmas
+@app.route("/lemma/close/")
+@login_required
+def closelemma():
+	return render_template("closelemma.html")
 
-#build all sentences db based on target and source language
-	#save possible grammar to list
+@app.route("/grammar/")
+@login_required
+def grammar():
+	return render_template("grammar.html")
 
+@app.route("/work/")
+@login_required
+def work():
+	senid = pickrandomsentence(targetlang,current_user.id)
+	app.logger.info(f"Sentence id {senid}")
+	text = gettext(senid, targetlang)
+	audioids = getaudioids(senid)
+	files = getaudiofiles(audioids)
+	for i, file in enumerate(files, start=0):
+		files[i] = url_for('static', filename='/audio/' + file)
+	translation = getgoogle(senid, targetlang, nativelang)
+	return render_template("work.html", text = text, audiofiles = files, translation=translation, senid=senid)
 
-#take known lemmas and cross reference with all sentence db
-	#produce list of one missing sentences
+@app.route('/work/', methods=["POST"])
+@login_required
+def workdone():
+	senid = request.form.get("next")
+	updatesentencelemma(senid, targetlang, current_user.id)
+	marksentence(senid, targetlang, current_user.id)
+	return redirect(url_for("work"))
 
+@app.route("/contact/")
+def contact():
+	return render_template("contact.html")
 
+@app.route("/signup/")
+def signup():
+	return render_template("signup.html")
+
+@app.route('/signup/', methods=['POST'])
+def signup_post():
+	# code to validate and add user to database goes here
+	email = request.form.get('email')
+	password = request.form.get('password')
+
+	user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
+
+	if user: # if a user is found, we want to redirect back to signup page so user can try again
+		flash('Email address already exists')
+		return redirect(url_for('signup'))
+
+	# create a new user with the form data. Hash the password so the plaintext version isn't saved.
+	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), emailauth=12345, authdate='1991-01-01')
+
+	# add the new user to the database
+	db.session.add(new_user)
+	db.session.commit()
+
+	return redirect(url_for('login'))
+
+@app.route("/login/" )
+def login():
+	return render_template("login.html")
+
+@app.route('/login', methods=['POST'])
+def login_post():
+	# login code goes here
+	email = request.form.get('email')
+	password = request.form.get('password')
+	remember = True if request.form.get('remember') else False
+
+	user = User.query.filter_by(email=email).first()
+
+	# check if the user actually exists
+	# take the user-supplied password, hash it, and compare it to the hashed password in the database
+	if not user or not check_password_hash(user.password, password):
+		flash('Please check your login details and try again.')
+		return redirect(url_for('login')) # if the user doesn't exist or password is wrong, reload the page
+
+	# if the above check passes, then we know the user has the right credentials
+	login_user(user, remember=remember)
+	return redirect(url_for('home'))
+
+'''@app.route("/<other>/")
+def other(other):
+	other=escape(other)
+	return #redirect'''
+
+@app.route('/logout')
+@login_required
+def logout():
+	logout_user()
+	return redirect(url_for('home'))
+
+if (__name__=='__main__'):
+	app.run(debug=True)
 

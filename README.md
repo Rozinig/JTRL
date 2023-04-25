@@ -75,10 +75,43 @@ python -m spacy download ja_core_news_sm
 pip install -U deep-translator
 pip install wget
 pip install python-vlc
-pip install Flask
+pip install Flask flask-login flask_sqlalchemy
 
 
 
 replace with when moving to high accuracy:
 python -m spacy download en_core_web_trf
 python -m spacy download ja_core_news_trf
+
+
+
+pages
+	home
+		if logged in show options to move to other pages
+		if not logged in show login box/signup box and introduction information
+	login
+		login page
+	signup
+		sign up page
+	about
+		basic info about the website
+	lemma
+		view all known lemma
+		option to remove lemma
+	lemma/add
+		textbox to add lemma
+	lemma/close
+		show all close lemma
+	grammar
+		show list of grammar with checkboxes to allow each into list
+	work page
+		shows audio files
+		shows target language text
+		hidden native language text until shown
+
+User auth
+	id, email, password, email *un*authentied
+User info
+	id, Join date, last login, list of target langs number of sentences, pateron api key
+User Settings
+	id, nativelang, list of target langs True false,  , darkmode, blob
