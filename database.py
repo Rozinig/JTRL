@@ -10,6 +10,13 @@ import bz2
 import time
 import logging
 import json
+	
+path = './tatoeba/'
+http = 'https://downloads.tatoeba.org/exports/'
+dirs = ['./lang/', './user/', './tatoeba/', './static/', './static/audio/', './logs/']
+for pathway in dirs:
+	if (not os.path.exists(pathway)):
+		os.mkdir(pathway)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,13 +26,10 @@ if __name__ == '__main__':
 	ch.setLevel(logging.DEBUG)
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
-	if (not os.path.exists('./logs/')):
-		os.mkdir('./logs/')
 	fh = logging.FileHandler('./logs/database.log')
 	fh.setLevel(logging.DEBUG)
 	fh.setFormatter(formatter)
 	logger.addHandler(fh)
-
 
 gtd = {'cat': 'ca', 'cmn': 'zh-CN', #traditional chinese 'cmn': 'zh-TW', 
 	'hrv': 'hr', 'dan': 'da', 'nld': 'nl', 'eng': 'en', 'fin': 'fi', 'fra': 'fr',
@@ -38,8 +42,7 @@ codetoname = {'cat': 'Catalan', 'cmn': 'Chinese (simplified)', 'hrv': 'Croatian'
 	'deu': 'German', 'ell': 'Greek', 'ita': 'Italian', 'jpn': 'Japanese', 'kor': 'Korean',
 	'lit': 'Lithuanian', 'mkd':'Macedonian', 'nob': 'Norwegian', 'pol': 'Polish', 'por': 'Portuguese', 
 	'ron': 'Romanian', 'rus': 'Russian', 'spa': 'Spanish', 'swe': 'Swedish', 'ukr': 'Ukrainian'}
-path = './tatoeba/'
-http = 'https://downloads.tatoeba.org/exports/'
+
 
 mode = 'json' # 'brute' 'sql'
 passgrammar = ['NUM', 'PUNCT', 'SYM', 'X']
@@ -56,8 +59,6 @@ def database():
 	return dur, don
 
 def langdatabase(lang): 
-	if (not os.path.exists('./lang/')):
-		os.mkdir('./lang/')
 	con = sqlite3.connect(f"./lang/{lang}.db")
 	con.row_factory = sqlite3.Row
 	cur = con.cursor()
@@ -65,8 +66,6 @@ def langdatabase(lang):
 	return cur, con
 
 def userdatabase(user): 
-	if (not os.path.exists('./user/')):
-		os.mkdir('./user/')
 	pon=sqlite3.connect(f"./user/{user}.db")
 	pon.row_factory = sqlite3.Row
 	logger.info(f"Connected to {user}'s Database")
@@ -104,7 +103,6 @@ def updatelemma(lemma, lang, user): #TODO what if lemma not in Database?
 
 def updatesentencelemma(num, lang, user):
 	cur, con = langdatabase(lang)
-	print(lang, num)
 	blob = json.loads(cur.execute(f"SELECT id, json FROM {lang}_json WHERE id = {str(num)}").fetchone()['json'])
 	for each in blob:
 		if (not each['POS'] in passgrammar):
@@ -150,17 +148,15 @@ def loadlang(lang):
 	cur, con = langdatabase(lang)
 	filename =f"{lang}_sentences.tsv.bz2"
 
-	if (not os.path.exists(path)):
-		os.mkdir(path)
 
-	if (os.path.isfile(path + filename)):
-		if (time.time()-os.path.getmtime(f"{path}{filename}")>604800):
-			os.remove(path + filename)
-			wget.download(f"{http}per_language/{lang}/{filename}", path)
+	if (os.path.isfile('./tatoeba/' + filename)):
+		if (time.time()-os.path.getmtime(f"./tatoeba/{filename}")>604800):
+			os.remove('./tatoeba/' + filename)
+			wget.download(f"{http}per_language/{lang}/{filename}", './tatoeba/')
 	else:
-		wget.download(f"{http}per_language/{lang}/{filename}", path)
+		wget.download(f"{http}per_language/{lang}/{filename}", './tatoeba/')
 
-	file = bz2.open(f"{path}{filename}", "r")
+	file = bz2.open(f"./tatoeba/{filename}", "r")
 
 	cur.execute(f"DROP TABLE IF EXISTS {lang}")
 	cur.execute(f"CREATE TABLE {lang}('id' INTEGER PRIMARY KEY, lang, text) WITHOUT ROWID")
@@ -176,14 +172,14 @@ def loadaux(aux):
 	lur, lon = langdatabase('all_lang')
 	filename =f"{aux}.tar.bz2"
 
-	if (os.path.isfile(path + filename)):
-		if (time.time()-os.path.getmtime(f"{path}{filename}")>604800):
-			os.remove(path + filename)
-			wget.download(f"{http}{filename}", path)
+	if (os.path.isfile('./tatoeba/' + filename)):
+		if (time.time()-os.path.getmtime(f"./tatoeba/{filename}")>604800):
+			os.remove('./tatoeba/' + filename)
+			wget.download(f"{http}{filename}", './tatoeba/')
 	else:
-		wget.download(f"{http}{filename}", path)
+		wget.download(f"{http}{filename}", './tatoeba/')
 
-	file = bz2.open(f"{path}{filename}", "r")
+	file = bz2.open(f"./tatoeba/{filename}", "r")
 
 	lur.execute(f"DROP TABLE IF EXISTS {aux}")
 	lur.execute(f"CREATE TABLE {aux}(id, data)")
@@ -259,7 +255,7 @@ def processlangjson(lang): #Reduce to only needed grammar once grammar refinded
 		for token in parsed:
 			bit = {'text':token.text, 'lemma':token.lemma_, 'POS':token.pos_, 'ent_type':token.ent_type_, 'tag':token.tag_, 'morph':token.morph.to_dict()}
 			tokens.append(bit)
-		cur.execute(f"INSERT INTO {lang}_json VALUES (?,?)",(row['id'], json.dumps(tokens)))
+		cur.execute(f"INSERT INTO {lang}_json VALUES (?,?)",(row['id'], json.dumps(tokens, ensure_ascii=False).encode('utf8')))
 	con.commit()
 	con.close()
 	totaltime = (time.time()-t)/60
@@ -282,6 +278,8 @@ def processsentencesjson(lang, user): #refine pass grammar, tags grammar and out
 		return
 	parsertime = 0
 	
+	already =pur.execute(f"SELECT id FROM {lang}_available_sentences").fetchall()
+	already = [i['id'] for i in already]
 	knownlemma = [lemma['lemma']for lemma in knownlemma]
 	for row in cur.execute(f"SELECT id, json FROM {lang}_json").fetchall(): 
 		pt = time.time()
@@ -296,9 +294,11 @@ def processsentencesjson(lang, user): #refine pass grammar, tags grammar and out
 				break
 
 		if (len(missing) == 0):
-			if not row['id'] in pur.execute(f"SELECT id FROM {lang}_available_sentences").fetchall():
+			if (not row['id'] in already):
 				pur.execute(f"INSERT INTO {lang}_available_sentences VALUES (?, ?, ?)",(row['id'], 0, '1991-01-01'))
-			logger.info(f"Sentence {row['id']} added to available sentences in {lang} for {user}")
+				logger.info(f"Sentence {row['id']} added to available sentences in {lang} for {user}")
+			else:
+				logger.info(f"Sentence {row['id']} already in available sentences in {lang} for {user}")
 		elif (len(missing) == 1):
 			if (missing[0],) in pur.execute(f"SELECT lemma FROM {lang}_close_lemma").fetchall():
 				count = pur.execute(f"SELECT count FROM '{lang}_close_lemma' WHERE lemma = ?",(missing[0],)).fetchone()
@@ -329,8 +329,9 @@ def processsentencesjson(lang, user): #refine pass grammar, tags grammar and out
 def pickrandomsentence(lang, user):
 	pur, pon = userdatabase(user)
 	count = pur.execute(f"SELECT COUNT(*) FROM {lang}_available_sentences").fetchone()[0]
-	print(count)
-	sentence = pur.execute(f"SELECT id FROM {lang}_available_sentences WHERE rowid = ?",(randrange(count),)).fetchone()['id']
+	number =randrange(count)
+	print(number)
+	sentence = pur.execute(f"SELECT id FROM {lang}_available_sentences WHERE rowid = ?",(number,)).fetchone()['id']
 	pon.close()
 	logger.info(f'Random sentence {sentence} picked for {user}')
 	return sentence
@@ -367,10 +368,10 @@ def gettext(num, lang):
 
 def marksentence(num, lang, user):
 	pur, pon = userdatabase(user)
-	print(num)
 	count = pur.execute(f"SELECT count FROM '{lang}_available_sentences' WHERE id = {str(num)}").fetchone()
-	print(count)
-	pur.execute(f"UPDATE {lang}_available_sentences SET date = ?, count = ? WHERE id = ?",(datetime.date.today(), count['count'] + 1, num))
+	date = str(datetime.date.today())
+	pur.execute(f"UPDATE {lang}_available_sentences SET date = ?, count = {count['count'] + 1} WHERE id = {num}",(date,))
+	#pur.execute(f"UPDATE {lang}_available_sentences SET date = ?, count = ? WHERE id = ?",(datetime.date.today(), count['count']+1, num))
 	pon.commit()
 	pon.close()
 	logger.info(f'Marking sentence, {num} as read by {user}')
@@ -402,10 +403,6 @@ def getaudioids(num):
 
 def getaudiofile(audioid):
 	lur, lon = langdatabase('all_lang')
-	if (not os.path.exists('./static/')):
-		os.mkdir('./static/')
-	if (not os.path.exists('./static/audio/')):
-		os.mkdir('./static/audio')
 	num = lur.execute(f"SELECT id FROM sentences_with_audio WHERE data = ?", audioid).fetchone()['id']
 	filename = num + '-' + audioid[0] + '.mp3'
 	filepath = './static/audio/' + filename
@@ -451,6 +448,7 @@ if __name__ == '__main__' :
 	#	addlemma(words, targetlang, user)
 	#updatesentencelemma(1297, targetlang, user)
 	#test()
-	processsentencesjson(targetlang, user)
+	#processlangjson(targetlang)
+	#processsentencesjson(targetlang, user)
 	#processsentencesraw(targetlang, user)
 	#updatelemma("は", targetlang, user)

@@ -36,20 +36,20 @@ class User(UserMixin, db.Model): #UserMixin,
 with app.app_context():
 	db.create_all()
 
+loglevel = {'DEBUG': 10, 'INFO': 20, 'WARNING': 30, 'ERROR': 40}
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(loglevel[app.config["STREAM_LOG_LEVEL"]])
 ch.setFormatter(formatter)
 
-if (not os.path.exists('./logs/')):
-	os.mkdir('./logs/')
 fh = logging.FileHandler('./logs/main.log')
-fh.setLevel(logging.DEBUG)
+fh.setLevel(loglevel[app.config['FILE_LOG_LEVEL']])
 fh.setFormatter(formatter)
 
+minlevel = min(loglevel[app.config['FILE_LOG_LEVEL']], loglevel[app.config['STREAM_LOG_LEVEL']])
 logger = app.logger
-logger.setLevel(logging.DEBUG)
+logger.setLevel(minlevel)
 logger.addHandler(ch)
 logger.addHandler(fh)
 

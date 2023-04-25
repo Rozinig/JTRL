@@ -1,7 +1,16 @@
 {
 	"SECRET_KEY":"192b9bdd22abaed4d12e236c77afcb9a383ec15f71bbf5dc987d54727823bcbf"	,
-	"NATIVE":"eng",
-	"TARGET":"jpn",
-	"USER":"william",
-	"SQLALCHEMY_DATABASE_URI":"sqlite:///auth.db"
+
+	"SQLALCHEMY_DATABASE_URI":"sqlite:///auth.db",
+
+	"STREAM_LOG_LEVEL":"DEBUG",
+
+	"FILE_LOG_LEVEL":"DEBUG",
+
+	"LANG_DB":{"cat": "Catalan", "cmn": "Chinese (simplified)", "hrv": "Croatian", "dan":"Danish",
+	"nld": "Dutch", "eng": "English", "fin": "Finnish", "fra": "French",
+	"deu": "German", "ell": "Greek", "ita": "Italian", "jpn": "Japanese", "kor": "Korean",
+	"lit": "Lithuanian", "mkd":"Macedonian", "nob": "Norwegian", "pol": "Polish", "por": "Portuguese", 
+	"ron": "Romanian", "rus": "Russian", "spa": "Spanish", "swe": "Swedish", "ukr": "Ukrainian"}
+
 }

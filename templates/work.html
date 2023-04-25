@@ -5,7 +5,7 @@
     <h1>{% block title %} Practice {% endblock %}</h1>
     <div id="audio">
         {% for audiofile in audiofiles %}
-        <audio controls autoplay>
+        <audio controls>
             <source src="{{audiofile}}" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>

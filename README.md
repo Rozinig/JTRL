@@ -115,3 +115,8 @@ User info
 	id, Join date, last login, list of target langs number of sentences, pateron api key
 User Settings
 	id, nativelang, list of target langs True false,  , darkmode, blob
+
+git status
+git add stuff
+git commit -m "stuff"
+git push origin master
