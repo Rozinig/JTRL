@@ -19,6 +19,15 @@
 	"lit": false, "mkd":false, "nob": false, "pol": false, "por": false, 
 	"ron": false, "rus": false, "spa": false, "swe": false, "ukr": false},
 
-	"FORCE_REBUILT":true
+	"FORCE_REBUILT":false,
+
+	"EMAIL":"madetosell@mail.com",
+
+	"EMAIL_PASS":"password",
+
+	"EMAIL_SERVER":"smtp.mail.com",
+
+	"EMAIL_SERVER_PORT":465
+
 
 }

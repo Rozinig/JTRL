@@ -128,9 +128,9 @@ def addinglemma():
 @login_required
 def lemmaadded():
 	words = request.form.get('words')
-	addlemma(words, targetlang, current_user.id)
+	lemmas = addlemma(words, targetlang, current_user.id)
 	processsentencesjson(targetlang, current_user.id)
-	return render_template("lemmaadded.html")
+	return render_template("lemmaadded.html", lemmas=lemmas)
 
 @app.route("/lemma/close/")
 @login_required
@@ -168,8 +168,22 @@ def contact():
 	email = ""
 	if (current_user.is_authenticated):
 		email = current_user.email
-	print(email)
 	return render_template("contact.html", email=email)
+
+@app.route("/contact/", methods=['POST'])
+def contacted():
+	name = request.form.get('name')
+	email = request.form.get('email')
+	message = request.form.get('message')
+	if (False): #TODO check email is email
+		flash('Pease fillout all fields.')
+		return redirect(url_for('contact'))
+	if (not name or not message):
+		flash('Pease fillout all fields.')
+		return redirect(url_for('contact'))
+	#TODO send Email
+	app.logger.info(f" User {name} sent a message from {email}: {message}")
+	return render_template("contacted.html", name=name)
 
 @app.route("/signup/")
 def signup():

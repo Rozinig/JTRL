@@ -3,8 +3,14 @@
 {% block content %}
     <h1>{% block title %} Contact Us {% endblock %}</h1>
     <div class="container">
-        <form action="action_page.php">
-
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="/contact">
             <label for="name">Name</label>
             <input type="text" id="name" name="name" placeholder="Your name...">
 
@@ -19,8 +25,8 @@
                 <option value="usa">Other</option>
             </select> -->
 
-            <label for="subject">Subject</label>
-            <textarea id="subject" name="subject" placeholder="Write something.." style="height:200px"></textarea>
+            <label for="subject">Message</label>
+            <textarea id="message" name="message" placeholder="Write something.." style="height:200px"></textarea>
 
             <input type="submit" value="Submit">
 

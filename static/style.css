@@ -32,3 +32,8 @@ input[type=submit], button:hover {
   background-color: #f2f2f2;
   padding: 20px;
 } 
+li[class="lemma"] {
+    display: block;
+    width: 16.1%;
+    float: left;
+}

@@ -1,10 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>{% block title %} Lemma {% endblock %}</h1>
+<div class="container">
+    <h1>{% block title %} Known Words {% endblock %}</h1>
+    <h2> These are the base words you know based on what you have uploaded</h2>
+</div>
     <ul>
+        <li class="lemma">Base Word</li>
+        <li class="lemma">Times Used</li>
+        <li class="lemma">Last Used Date</li>
+        <li class="lemma">Base Word</li>
+        <li class="lemma">Times Used</li>
+        <li class="lemma">Last Used Date</li>
         {% for info in lemmas %}
-        <li> {{info['lemma']}}___{{info['count']}}__{{info['date']}}</li>
+        <li class="lemma"> {{info['lemma']}}</li>
+        <li class="lemma"> {{info['count']}}</li>
+        <li class="lemma"> {{info['date']}}</li>
         {% endfor %}
     </ul>
 {% endblock %}
