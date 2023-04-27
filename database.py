@@ -104,10 +104,10 @@ def updatelemma(lemma, lang, user): #TODO what if lemma not in Database?
 def updatesentencelemma(num, lang, user):
 	cur, con = langdatabase(lang)
 	blob = json.loads(cur.execute(f"SELECT id, json FROM {lang}_json WHERE id = {str(num)}").fetchone()['json'])
+	con.close()
 	for each in blob:
 		if (not each['POS'] in passgrammar):
 			updatelemma(each["lemma"], lang, user)
-	con.close()
 
 def removelemma(words, lang, user):
 	pur, pon = userdatabase(user)
@@ -144,6 +144,14 @@ def getlemmainfo(word, lang, user):
 	logger.info(f"{info} found for {user}'s word: {word}")
 	return info
 
+def getalllemmainfo(lang,user):
+	pur, pon = userdatabase(user)
+	info = pur.execute(f"SELECT lemma, count, date FROM {lang}_known_lemma ").fetchall()
+	pon.close()
+	logger.info(f"Retrieved all known lemma for {user}")
+	return info
+
+
 def loadlang(lang):
 	cur, con = langdatabase(lang)
 	filename =f"{lang}_sentences.tsv.bz2"
@@ -159,11 +167,12 @@ def loadlang(lang):
 	file = bz2.open(f"./tatoeba/{filename}", "r")
 
 	cur.execute(f"DROP TABLE IF EXISTS {lang}")
-	cur.execute(f"CREATE TABLE {lang}('id' INTEGER PRIMARY KEY, lang, text) WITHOUT ROWID")
+	cur.execute(f"CREATE TABLE {lang}('id' INTEGER PRIMARY KEY, text) WITHOUT ROWID")
 
 	for line in file:
 		line = str(line[:-1],'UTF-8').split("\t")
-		cur.execute(f"INSERT INTO {lang} VALUES (?,?,?)",line)
+		line = [line[0], line[2]]
+		cur.execute(f"INSERT INTO {lang} VALUES (?,?)",line)
 	logger.info(f"{lang} database for language, {lang} has been updated")
 	con.commit()
 	con.close()
@@ -314,6 +323,14 @@ def processsentencesjson(lang, user): #refine pass grammar, tags grammar and out
 	parsertime = parsertime/60
 	logger.info(f'Language json retrival took {parsertime} mintues')
 
+def touchjson(lang):
+	cur, con = langdatabase(lang)	
+	touch = cur.execute(f"SELECT name FROM sqlite_master WHERE name = '{lang}_json'").fetchone()
+	con.close()
+	if (touch is None):
+		return False
+	return True
+
 '''def processlangsql(lang): #Refine Grammar
 	cur, con = langdatabase(lang)
 	cur.execute(f"DROP TABLE IF EXISTS {lang}_sql_lemma")
@@ -452,3 +469,6 @@ if __name__ == '__main__' :
 	#processsentencesjson(targetlang, user)
 	#processsentencesraw(targetlang, user)
 	#updatelemma("は", targetlang, user)
+	print(getalllemmainfo(targetlang, user)[0]['lemma'])
+	#print("Japanse Json? ", touchjson(targetlang))
+	#print("English Json? ", touchjson(nativelang))

@@ -57,17 +57,39 @@ databaselogger = logging.getLogger('database')
 databaselogger.addHandler(ch)
 databaselogger.addHandler(fh)
 
+#Build/Rebuild Databases
+nativelangs = app.config['NATIVE_LANG']
+targetlangs = app.config['TARGET_LANG']
+
+if (app.config['FORCE_REBUILT']):
+	test = input("Config file is set to force rebuilt. Are you sure you want to contiune? (Y/N):")
+	test = test.upper()
+	if (test != "Y" and test != "YES"):
+		app.config['FORCE_REBUILT'] = False
+
+
+for lang in nativelangs:
+	dbexists = os.path.isfile(f'./lang/{lang}.db')
+	if ((not dbexists or app.config['FORCE_REBUILT']) and (nativelangs[lang] or targetlangs[lang])):
+		app.logger.info(f"Rebuilding {lang} database. This might take a while...")
+		t = time.time()
+		loadlang(targetlang)
+		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} database")
+
+	if ((not dbexists or app.config['FORCE_REBUILT']) and targetlangs[lang]):
+		app.logger.info(f"Rebuilding {lang} json database. This might take a while...")
+		t = time.time()
+		processlangjson(lang)
+		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} json database")
+
 
 if (not os.path.exists('./lang/all_lang.db')):
-	targetlang = 'jpn'
-	print('rebuilding database')
 	t = time.time()
-	loadlang(targetlang)
-	loadaux('tags')
+	app.logger.info("Rebuilding all_lang database. This might take a while...")
+	#loadaux('tags')
 	loadaux('links')
 	loadaux('sentences_with_audio') #need to exclude Create commons
-	processlangjson(targetlang)
-	print(time.time()-t)
+	app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild all_lang database")
 
 
 langs = {'cat','Catalan', 'cmn','Chinese (mandarin i think)', 'hrv','Croatian',
@@ -94,7 +116,8 @@ def about():
 @app.route("/lemma/")
 @login_required
 def lemma():
-	return render_template("lemma.html")
+	lemmas = getalllemmainfo(targetlang, current_user.id)
+	return render_template("lemma.html", lemmas = lemmas)
 
 @app.route("/lemma/add/")
 @login_required
@@ -142,7 +165,11 @@ def workdone():
 
 @app.route("/contact/")
 def contact():
-	return render_template("contact.html")
+	email = ""
+	if (current_user.is_authenticated):
+		email = current_user.email
+	print(email)
+	return render_template("contact.html", email=email)
 
 @app.route("/signup/")
 def signup():

@@ -7,10 +7,18 @@
 
 	"FILE_LOG_LEVEL":"DEBUG",
 
-	"LANG_DB":{"cat": "Catalan", "cmn": "Chinese (simplified)", "hrv": "Croatian", "dan":"Danish",
-	"nld": "Dutch", "eng": "English", "fin": "Finnish", "fra": "French",
-	"deu": "German", "ell": "Greek", "ita": "Italian", "jpn": "Japanese", "kor": "Korean",
-	"lit": "Lithuanian", "mkd":"Macedonian", "nob": "Norwegian", "pol": "Polish", "por": "Portuguese", 
-	"ron": "Romanian", "rus": "Russian", "spa": "Spanish", "swe": "Swedish", "ukr": "Ukrainian"}
+	"TARGET_LANG":{"cat": false, "cmn": false, "hrv": false, "dan":false,
+	"nld": false, "eng": false, "fin": false, "fra": false,
+	"deu": false, "ell": false, "ita": false, "jpn": true, "kor": false,
+	"lit": false, "mkd":false, "nob": false, "pol": false, "por": false, 
+	"ron": false, "rus": false, "spa": false, "swe": false, "ukr": false},
+
+	"NATIVE_LANG":{"cat": false, "cmn": false, "hrv": false, "dan":false,
+	"nld": false, "eng": true, "fin": false, "fra": false,
+	"deu": false, "ell": false, "ita": false, "jpn": false, "kor": false,
+	"lit": false, "mkd":false, "nob": false, "pol": false, "por": false, 
+	"ron": false, "rus": false, "spa": false, "swe": false, "ukr": false},
+
+	"FORCE_REBUILT":true
 
 }

@@ -2,6 +2,9 @@
 
 {% block content %}
     <h1>{% block title %} Lemma {% endblock %}</h1>
-    <h1>Hello World!</h1>
-    <h2>Welcome to FlaskApp!</h2>
+    <ul>
+        {% for info in lemmas %}
+        <li> {{info['lemma']}}___{{info['count']}}__{{info['date']}}</li>
+        {% endfor %}
+    </ul>
 {% endblock %}

@@ -14,7 +14,8 @@ source .env/bin/activate
 to start program with flask
 flask --app main run
 
-Layout
+Layout -Outdated
+
 
 JTRL
 |-Database
