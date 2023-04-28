@@ -7,6 +7,25 @@ JTRL stands for Just the right level.
 The idea is that a large group of language content is processed into a database and then 
 only the parts of it that meet your level are displayed to you for practice.
 
+Setup:
+
+	python -m venv .env
+	source .env/bin/activate
+	pip install -U pip setuptools wheel
+	pip install -U spacy
+	python -m spacy download en_core_web_sm		
+	python -m spacy download ja_core_news_sm
+	pip install -U deep-translator
+	pip install wget
+	pip install python-vlc
+	pip install Flask flask-login flask_sqlalchemy
+
+	export FLASK_APP=.
+	export FLASK_DEBUG=1
+
+Run:
+	flask run
+
 
 Layout -Outdated
 
@@ -61,16 +80,6 @@ https://www.tutorialspoint.com/flask/flask_application.htm
 https://tatoeba.org/en/downloads
 Rebuild virtual Environment
 
-python -m venv .env
-source .env/bin/activate
-pip install -U pip setuptools wheel
-pip install -U spacy
-python -m spacy download en_core_web_sm		
-python -m spacy download ja_core_news_sm
-pip install -U deep-translator
-pip install wget
-pip install python-vlc
-pip install Flask flask-login flask_sqlalchemy
 
 
 

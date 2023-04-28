@@ -1,19 +1,12 @@
 from deep_translator import GoogleTranslator as gt
 from random import randrange
 import vlc
-import parser
-import sqlite3
-import datetime
-import wget
-import os
-import bz2
-import time
-import logging
-import json
+from . import parser
+import sqlite3, datetime, wget, os, bz2, time, logging, json
 	
 path = './tatoeba/'
 http = 'https://downloads.tatoeba.org/exports/'
-dirs = ['./lang/', './user/', './tatoeba/', './static/', './static/audio/', './logs/']
+dirs = ['./lang/', './user/', './tatoeba/', './static/', './JTRL/static/audio/', './logs/']
 for pathway in dirs:
 	if (not os.path.exists(pathway)):
 		os.mkdir(pathway)
@@ -422,9 +415,9 @@ def getaudiofile(audioid):
 	lur, lon = langdatabase('all_lang')
 	num = lur.execute(f"SELECT id FROM sentences_with_audio WHERE data = ?", audioid).fetchone()['id']
 	filename = num + '-' + audioid[0] + '.mp3'
-	filepath = './static/audio/' + filename
+	filepath = './JTRL/static/audio/' + filename
 	if (not os.path.isfile(filepath)):
-		wget.download(f"https://tatoeba.org/audio/download/{audioid[0]}", './static/audio/')
+		wget.download(f"https://tatoeba.org/audio/download/{audioid[0]}", './JTRL/static/audio/')
 		logger.info(f'Audio file for {audioid} Downloaded')
 	else:
 		logger.info(f'Audio file for {audioid[0]} already downloaded')

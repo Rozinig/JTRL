@@ -9,8 +9,10 @@ def contactemail(email, name, usermessage, cred):
     message["To"] = cred['email']
     message['reply-to'] = email
 
+
     body = f"""User, {name} with the {email} has sent you a message through the contact form on JTRL: {usermessage}"""
-    message
+    
+    message.set_content(body)
 
     # Create secure connection with server and send email
     context = ssl.create_default_context()
