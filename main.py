@@ -4,7 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, cur
 from werkzeug.security import generate_password_hash, check_password_hash
 from markupsafe import escape
 from database import *
-#from user import *
+import mail
 import time
 import json
 import os
@@ -181,7 +181,7 @@ def contacted():
 	if (not name or not message):
 		flash('Pease fillout all fields.')
 		return redirect(url_for('contact'))
-	#TODO send Email
+	mail.contactemail(email, name, message, app.config['CONTACT_EMAIL'])
 	app.logger.info(f" User {name} sent a message from {email}: {message}")
 	return render_template("contacted.html", name=name)
 

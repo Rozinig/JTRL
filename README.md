@@ -7,12 +7,6 @@ JTRL stands for Just the right level.
 The idea is that a large group of language content is processed into a database and then 
 only the parts of it that meet your level are displayed to you for practice.
 
-To start Vitural Enviroment
-source .env/bin/activate
-
-
-to start program with flask
-flask --app main run
 
 Layout -Outdated
 
@@ -116,8 +110,3 @@ User info
 	id, Join date, last login, list of target langs number of sentences, pateron api key
 User Settings
 	id, nativelang, list of target langs True false,  , darkmode, blob
-
-git status
-git add stuff
-git commit -m "stuff"
-git push origin master

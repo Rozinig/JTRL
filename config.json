@@ -21,13 +21,13 @@
 
 	"FORCE_REBUILT":false,
 
-	"EMAIL":"madetosell@mail.com",
+	"CONTACT_EMAIL":{"email":"williammadson@gmail.com",
 
-	"EMAIL_PASS":"password",
+					"pass":"password",
 
-	"EMAIL_SERVER":"smtp.mail.com",
+					"server":"smtp.gmail.com",
 
-	"EMAIL_SERVER_PORT":465
+					"port":465}
 
 
 }

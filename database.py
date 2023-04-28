@@ -469,6 +469,6 @@ if __name__ == '__main__' :
 	#processsentencesjson(targetlang, user)
 	#processsentencesraw(targetlang, user)
 	#updatelemma("は", targetlang, user)
-	print(getalllemmainfo(targetlang, user)[0]['lemma'])
+	#print(getalllemmainfo(targetlang, user)[0]['lemma'])
 	#print("Japanse Json? ", touchjson(targetlang))
 	#print("English Json? ", touchjson(nativelang))
