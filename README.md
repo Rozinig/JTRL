@@ -103,6 +103,7 @@ pages
 		shows audio files
 		shows target language text
 		hidden native language text until shown
+	contact
 
 User auth
 	id, email, password, email *un*authentied
