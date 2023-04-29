@@ -11,18 +11,16 @@ app.config.from_file("config.json", load=json.load)
 db.init_app(app)
 
 login_manager = LoginManager()
-login_manager.login_view = 'login'
+login_manager.login_view = 'auth.login'
 login_manager.init_app(app)
 
 
 from .models import User
-
 @login_manager.user_loader
 def load_user(user_id):
 	return User.query.get(int(user_id))
 
 
-#if (os.path.isfile('./instance/auth.db')):
 with app.app_context():
 	db.create_all()
 
@@ -66,7 +64,7 @@ for lang in nativelangs:
 		loadlang(lang)
 		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} database")
 
-	if ((not dbexists or app.config['FORCE_REBUILT']) and targetlangs[lang]):
+	if ((not dbexists or app.config['FORCE_REBUILT'] or  not touchlangdb(lang,f"{lang}_json")) and targetlangs[lang]):
 		app.logger.info(f"Rebuilding {lang} json database. This might take a while...")
 		t = time.time()
 		processlangjson(lang)
@@ -80,13 +78,6 @@ if (not os.path.exists('./lang/all_lang.db')):
 	loadaux('links')
 	loadaux('sentences_with_audio') #need to exclude Create commons
 	app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild all_lang database")
-
-
-langs = {'cat','Catalan', 'cmn','Chinese (mandarin i think)', 'hrv','Croatian',
-'dan','Danish', 'nld','Dutch', 'eng','English', 'fin','Finnish', 'fra','French', 'deu','German',
-'ell','Greek', 'ita','Italian', 'jpn','Japanese', 'kor','Korean', 'lit','Lithuanian', 'mkd','Macedonian',
-'nob','Norwegian Bokmal', 'pol','Polish', 'por','Portuguese', 'ron','Romanian', 'rus','Russian', 'spa','Spanish',
-'swe','Swedish', 'ukr','Ukrainian'}
 
 
 with app.app_context():

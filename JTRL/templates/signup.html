@@ -3,7 +3,7 @@
 {% block content %}
 <div class="column is-4 is-offset-4">
     <h3 class="title">Sign Up</h3>
-    <div class="box">
+    <div class="container">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="notification is-danger">
@@ -15,7 +15,7 @@
             <label for="email">Email</label>
             <div class="field">
                 <div class="control">
-                    <input class="input is-large" type="email" id ="email" name="email" placeholder="example@domain.com" autofocus="" title="Email">
+                    <input type="email" id ="email" name="email" placeholder="example@domain.com" autofocus="" title="Email">
                 </div>
             </div>
             <p></p>
@@ -23,15 +23,21 @@
             <label for="password">Password</label>
             <div class="field">
                 <div class="control">
-                    <input class="input is-large" type="password" id="password" name="password" placeholder="Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Password">
+                    <input type="password" id="password" name="password" placeholder="Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Password">
                 </div>
             </div>
             <p></p>
+            <label for="lang">What language would you like to learn? You can add more later.</label>
+            <select id="lang" name="lang">
+                {% for lang in langs %}
+                <option value="{{lang}}">{{langs[lang]}}</option>
+                {% endfor %}
+            </select>
 
-            <button class="button is-block is-info is-large is-fullwidth">Sign Up</button>
+            <button>Sign Up</button>
 
         </form>
-        <div id="message">
+        <div id="passmessage">
           <h3>Password must contain the following:</h3>
           <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
           <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
@@ -39,5 +45,64 @@
           <p id="length" class="invalid">Minimum <b>8 characters</b></p>
         </div>
     </div>
+    <script>
+    var myInput = document.getElementById("password");
+    var letter = document.getElementById("letter");
+    var capital = document.getElementById("capital");
+    var number = document.getElementById("number");
+    var length = document.getElementById("length");
+
+    // When the user clicks on the password field, show the passmessage box
+    myInput.onfocus = function() {
+      document.getElementById("passmessage").style.display = "block";
+    }
+
+    // When the user clicks outside of the password field, hide the passmessage box
+    myInput.onblur = function() {
+      document.getElementById("passmessage").style.display = "none";
+    }
+
+    // When the user starts to type something inside the password field
+    myInput.onkeyup = function() {
+      // Validate lowercase letters
+      var lowerCaseLetters = /[a-z]/g;
+      if(myInput.value.match(lowerCaseLetters)) {
+        letter.classList.remove("invalid");
+        letter.classList.add("valid");
+      } else {
+        letter.classList.remove("valid");
+        letter.classList.add("invalid");
+    }
+
+      // Validate capital letters
+      var upperCaseLetters = /[A-Z]/g;
+      if(myInput.value.match(upperCaseLetters)) {
+        capital.classList.remove("invalid");
+        capital.classList.add("valid");
+      } else {
+        capital.classList.remove("valid");
+        capital.classList.add("invalid");
+      }
+
+      // Validate numbers
+      var numbers = /[0-9]/g;
+      if(myInput.value.match(numbers)) {
+        number.classList.remove("invalid");
+        number.classList.add("valid");
+      } else {
+        number.classList.remove("valid");
+        number.classList.add("invalid");
+      }
+
+      // Validate length
+      if(myInput.value.length >= 8) {
+        length.classList.remove("invalid");
+        length.classList.add("valid");
+      } else {
+        length.classList.remove("valid");
+        length.classList.add("invalid");
+      }
+    }
+    </script>
 </div>
 {% endblock %}

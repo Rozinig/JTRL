@@ -9,16 +9,26 @@ logger = current_app.logger
 
 auth = Blueprint('auth', __name__)
 
+poslangs = {'cat': 'Catalan', 'cmn': 'Chinese', 'hrv': 'Croatian', 'dan':'Danish',
+	'nld': 'Dutch', 'eng': 'English', 'fin': 'Finnish', 'fra': 'French',
+	'deu': 'German', 'ell': 'Greek', 'ita': 'Italian', 'jpn': 'Japanese', 'kor': 'Korean',
+	'lit': 'Lithuanian', 'mkd':'Macedonian', 'nob': 'Norwegian', 'pol': 'Polish', 'por': 'Portuguese', 
+	'ron': 'Romanian', 'rus': 'Russian', 'spa': 'Spanish', 'swe': 'Swedish', 'ukr': 'Ukrainian'}
 
 @auth.route("/signup/")
 def signup():
-	return render_template("signup.html")
+	langs ={}
+	for lang in poslangs:
+		if config['TARGET_LANG'][lang]:
+			langs[lang]=poslangs[lang]
+	return render_template("signup.html", langs=langs)
 
 @auth.route('/signup/', methods=['POST'])
 def signup_post():
 	# code to validate and add user to database goes here
 	email = request.form.get('email')
 	password = request.form.get('password')
+	lang = request.form.get('lang')
 
 	user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
 
@@ -27,12 +37,13 @@ def signup_post():
 		return redirect(url_for('auth.signup'))
 
 	# create a new user with the form data. Hash the password so the plaintext version isn't saved.
-	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), emailauth=12345, authdate='1991-01-01')
+	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), emailauth=12345, 
+		authdate='1991-01-01', currentlang=lang, settings='{"tarlangs":[], "natlang":"eng"}')
 
 	# add the new user to the database
 	db.session.add(new_user)
 	db.session.commit()
-
+	flash("Account creation successful!")
 	return redirect(url_for('auth.login'))
 
 @auth.route("/login/" )

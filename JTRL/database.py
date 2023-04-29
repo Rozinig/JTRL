@@ -1,7 +1,6 @@
 from deep_translator import GoogleTranslator as gt
 from random import randrange
 import vlc
-from . import parser
 import sqlite3, datetime, wget, os, bz2, time, logging, json
 	
 path = './tatoeba/'
@@ -23,19 +22,15 @@ if __name__ == '__main__':
 	fh.setLevel(logging.DEBUG)
 	fh.setFormatter(formatter)
 	logger.addHandler(fh)
+	import parser
+else:
+	from . import parser
 
 gtd = {'cat': 'ca', 'cmn': 'zh-CN', #traditional chinese 'cmn': 'zh-TW', 
 	'hrv': 'hr', 'dan': 'da', 'nld': 'nl', 'eng': 'en', 'fin': 'fi', 'fra': 'fr',
 	'deu': 'de', 'ell': 'el', 'ita': 'it', 'jpn': 'ja', 'kor': 'ko',
 	'lit': 'lt', 'mkd': 'mk', 'nob': 'no', 'pol': 'pl', 'por': 'pt', 
 	'ron': 'ro', 'rus': 'ru', 'spa': 'es', 'swe': 'sv', 'ukr': 'uk'}
-
-codetoname = {'cat': 'Catalan', 'cmn': 'Chinese (simplified)', 'hrv': 'Croatian', 'dan':'Danish',
-	'nld': 'Dutch', 'eng': 'English', 'fin': 'Finnish', 'fra': 'French',
-	'deu': 'German', 'ell': 'Greek', 'ita': 'Italian', 'jpn': 'Japanese', 'kor': 'Korean',
-	'lit': 'Lithuanian', 'mkd':'Macedonian', 'nob': 'Norwegian', 'pol': 'Polish', 'por': 'Portuguese', 
-	'ron': 'Romanian', 'rus': 'Russian', 'spa': 'Spanish', 'swe': 'Swedish', 'ukr': 'Ukrainian'}
-
 
 mode = 'json' # 'brute' 'sql'
 passgrammar = ['NUM', 'PUNCT', 'SYM', 'X']
@@ -316,13 +311,27 @@ def processsentencesjson(lang, user): #refine pass grammar, tags grammar and out
 	parsertime = parsertime/60
 	logger.info(f'Language json retrival took {parsertime} mintues')
 
-def touchjson(lang):
+def touchlangdb(lang, db):
 	cur, con = langdatabase(lang)	
-	touch = cur.execute(f"SELECT name FROM sqlite_master WHERE name = '{lang}_json'").fetchone()
+	touch = cur.execute(f"SELECT name FROM sqlite_master WHERE name = '{db}'").fetchone()
 	con.close()
 	if (touch is None):
 		return False
 	return True
+
+def touchuserdb(user, lang, db):
+	pur, pon = userdatabase(user)
+	touch = pur.execute(f"SELECT name FROM sqlite_master WHERE name = '{db}'").fetchone()
+	if (touch is None):
+		pon.close()
+		return False
+	count = pur.execute(f"SELECT COUNT(*) FROM {db}").fetchone()[0]
+	pon.close()
+	print(count)
+	if (count == 0):
+		return False
+	return True
+
 
 '''def processlangsql(lang): #Refine Grammar
 	cur, con = langdatabase(lang)
@@ -390,6 +399,7 @@ def getgoogle(num, targetlang, nativelang):
 	cur, con = langdatabase(targetlang)
 	info = cur.execute(f"SELECT text FROM {targetlang} WHERE id = {num}").fetchone()
 	con.close()
+	print(nativelang)
 	translation = gt(source=gtd[targetlang], target=gtd[nativelang]).translate(info['text'])
 	logger.info(f'Returning google translation for sentence, {num} in {nativelang}')
 	return translation
@@ -451,11 +461,20 @@ if __name__ == '__main__' :
 	#Testing stuff
 	nativelang = 'eng'
 	targetlang = 'jpn'
-	user = 4
+	user = 1
 	logger.info(f'database.py run as main')
 	test = ["私は眠らなければなりません。", "きみにちょっとしたものをもってきたよ。", "何かしてみましょう。", "何してるの？", "今日は６月１８日で、ムーリエルの誕生日です！"]
-	#for words in test:
-	#	addlemma(words, targetlang, user)
+	test2 = "私"
+	print("lemma " + str(touchuserdb(user, targetlang, f"{targetlang}_known_lemma")))
+	addlemma(test2, targetlang, user)
+	print("lemma " + str(touchuserdb(user, targetlang, f"{targetlang}_known_lemma")))
+	print("sentences " + str(touchuserdb(user, targetlang, f"{targetlang}_available_sentences")))
+	processsentencesjson(targetlang, user)
+	print("sentences " + str(touchuserdb(user, targetlang, f"{targetlang}_available_sentences")))
+	for words in test:
+		addlemma(words, targetlang, user)
+	processsentencesjson(targetlang, user)
+	print("sentences " + str(touchuserdb(user, targetlang, f"{targetlang}_available_sentences")))
 	#updatesentencelemma(1297, targetlang, user)
 	#test()
 	#processlangjson(targetlang)

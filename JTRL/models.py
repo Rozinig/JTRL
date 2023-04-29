@@ -7,3 +7,5 @@ class User(UserMixin, db.Model): #UserMixin,
     password = db.Column(db.String(100))
     emailauth = db.Column(db.Integer)
     authdate = db.Column(db.String(100))
+    currentlang = db.Column(db.String(10))
+    settings = db.Column(db.String(1000))
