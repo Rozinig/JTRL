@@ -3,6 +3,7 @@
 {% block content %}
 <div class="container">
     <h1>{% block title %} Known Words {% endblock %}</h1>
+    <h2>{{config['LANGS'][current_user.currentlang]}} </h2>
     <h2> These are the base words you know based on what you have uploaded</h2>
 </div>
     <ul>

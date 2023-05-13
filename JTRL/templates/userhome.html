@@ -3,6 +3,14 @@
 {% block content %}
     <h1>{% block title %} Home {% endblock %}</h1>
     <h1>Welcome back!</h1>
+    <h2> Your current language is {{config['LANGS'][current_user.currentlang]}} </h2>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
     <div>
         <h2>
             <p>

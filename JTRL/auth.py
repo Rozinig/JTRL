@@ -2,18 +2,15 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from .models import User
-from . import db
+from . import db, mail
+import json, datetime, random
 
 config = current_app.config
 logger = current_app.logger
 
 auth = Blueprint('auth', __name__)
 
-poslangs = {'cat': 'Catalan', 'cmn': 'Chinese', 'hrv': 'Croatian', 'dan':'Danish',
-	'nld': 'Dutch', 'eng': 'English', 'fin': 'Finnish', 'fra': 'French',
-	'deu': 'German', 'ell': 'Greek', 'ita': 'Italian', 'jpn': 'Japanese', 'kor': 'Korean',
-	'lit': 'Lithuanian', 'mkd':'Macedonian', 'nob': 'Norwegian', 'pol': 'Polish', 'por': 'Portuguese', 
-	'ron': 'Romanian', 'rus': 'Russian', 'spa': 'Spanish', 'swe': 'Swedish', 'ukr': 'Ukrainian'}
+poslangs = config['LANGS']
 
 @auth.route("/signup/")
 def signup():
@@ -26,7 +23,7 @@ def signup():
 @auth.route('/signup/', methods=['POST'])
 def signup_post():
 	# code to validate and add user to database goes here
-	email = request.form.get('email')
+	email = request.form.get('email').lower()
 	password = request.form.get('password')
 	lang = request.form.get('lang')
 
@@ -38,7 +35,7 @@ def signup_post():
 
 	# create a new user with the form data. Hash the password so the plaintext version isn't saved.
 	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), emailauth=12345, 
-		authdate='1991-01-01', currentlang=lang, settings='{"tarlangs":[], "natlang":"eng"}')
+		authdate='1991-01-01', currentlang=lang, settings=json.dumps({"tarlangs":[lang], "natlang":"eng"}))
 
 	# add the new user to the database
 	db.session.add(new_user)
@@ -53,7 +50,7 @@ def login():
 @auth.route('/login', methods=['POST'])
 def login_post():
 	# login code goes here
-	email = request.form.get('email')
+	email = request.form.get('email').lower()
 	password = request.form.get('password')
 	remember = True if request.form.get('remember') else False
 
@@ -68,6 +65,38 @@ def login_post():
 	# if the above check passes, then we know the user has the right credentials
 	login_user(user, remember=remember)
 	return redirect(url_for('admin.home'))
+
+@auth.route('/forgot')
+def forgot():
+	return render_template("forgotpassword.html")
+
+@auth.route('/forgot', methods=['POST'])
+def forgotpress():
+	test = request.form.get("button")
+	email = request.form.get("email").lower()
+	user = User.query.filter_by(email=email).first()
+	if (not user):
+		flash("Email not found")
+		return redirect(url_for('auth.forgot'))
+		
+	if (test == "email"):
+		user.emailauth = random.randint(10000000, 99999999)
+		user.authdate = datetime.date.today()
+		db.session.commit()
+		link = url_for('auth.forgot')
+		mail.resetemail(email, user.emailauth, link, config['CONTACT_EMAIL'])
+		flash("Email sent.")
+		return render_template("forgotpassword.html", email=email)
+
+	password = request.form.get("password")
+	code = request.form.get("code")
+	
+	if (code == str(user.emailauth) and user.authdate == str(datetime.date.today())):
+		user.password = generate_password_hash(password, method='sha256')
+		flash("Password Reset")
+		return redirect(url_for('auth.login'))
+	flash("Code does not match.")
+	return redirect(url_for('auth.forgot'))
 
 @auth.route('/logout')
 @login_required

@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="work">
-    <h1>{% block title %} Practice {% endblock %}</h1>
+    <h1>{% block title %} Practice {{config['LANGS'][current_user.currentlang]}}{% endblock %}</h1>
     <div id="audio">
         {% for audiofile in audiofiles %}
         <audio controls>
@@ -18,6 +18,9 @@
     </div> 
          <button onclick="myFunction()">Show English</button>
     <div id="translation">
+        {% if info %}
+        <h3>{{info}}</h3>
+        {% endif %}
       <h3>{{translation}}</h3>
     </div> 
     <div id="translation space">

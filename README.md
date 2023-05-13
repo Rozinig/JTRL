@@ -19,6 +19,7 @@ Setup:
 	pip install wget
 	pip install python-vlc
 	pip install Flask flask-login flask_sqlalchemy
+	pip install jaconv
 
 	export FLASK_APP=.
 	export FLASK_DEBUG=1

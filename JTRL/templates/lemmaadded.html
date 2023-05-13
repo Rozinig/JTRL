@@ -2,6 +2,7 @@
 
 {% block content %}
     <h1>{% block title %} Words Added {% endblock %}</h1>
+    <h2>{{config['LANGS'][current_user.currentlang]}}</h2>
     <h2>Here are the baes words that have been added based on your input.</h2>
     <h3>New sentences will become available based on these words</h3>
     <div class="container">

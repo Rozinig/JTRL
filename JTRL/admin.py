@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import LoginManager, login_user, current_user
-from . import db
-from . import mail
+from . import db, mail
 
 config = current_app.config
 logger = current_app.logger
@@ -30,9 +29,9 @@ def contact():
 @admin.route("/contact/", methods=['POST'])
 def contacted():
 	name = request.form.get('name')
-	email = request.form.get('email')
+	email = request.form.get('email').lower()
 	message = request.form.get('message')
-	if (False): #TODO check email is email
+	if (False): #TODO check email is email -- already kind of done in html
 		flash('Pleae enter a vaild email')
 		return redirect(url_for('admin.contact'))
 	if (not name or not message):

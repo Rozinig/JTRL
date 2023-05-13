@@ -12,7 +12,7 @@ learn = Blueprint('learn', __name__)
 @learn.route("/lemma/")
 @login_required
 def lemma():
-	if touchuserdb(current_user.id, current_user.currentlang, f"{current_user.currentlang}_known_lemma"):
+	if touchuserdb(current_user.currentlang, current_user.id, f"{current_user.currentlang}_known_lemma"):
 		lemmas = getalllemmainfo(current_user.currentlang, current_user.id)
 		return render_template("lemma.html", lemmas = lemmas)
 	flash("You don't have any known words.")
@@ -40,12 +40,28 @@ def closelemma():
 @learn.route("/grammar/")
 @login_required
 def grammar():
-	return render_template("grammar.html")
+	grammar = pullusergram(current_user.currentlang, current_user.id)
+	return render_template("grammar.html", grammar=grammar)
+
+@learn.route("/grammar/", methods=["POST"])
+@login_required
+def grammarchange():
+	grammar = pullusergram(current_user.currentlang, current_user.id)
+	for gtype in grammar:
+		for thing in grammar[gtype]:
+			for know in grammar[gtype][thing]:
+				if request.form.get(f'{gtype}_{thing}_{know}') == 'on': 
+					grammar[gtype][thing][know] = True 
+				else: 
+					grammar[gtype][thing][know] = False
+	pushusergram(current_user.currentlang, current_user.id, grammar)
+	flash("Grammar changes Saved.")
+	return redirect(url_for("admin.home"))
 
 @learn.route("/work/")
 @login_required
 def work():
-	if not touchuserdb(current_user.id, current_user.currentlang, f"{current_user.currentlang}_available_sentences"):
+	if not touchuserdb(current_user.currentlang, current_user.id, f"{current_user.currentlang}_available_sentences"):
 		flash("You don't have any sentences available. Try adding more words.")
 		return redirect(url_for("learn.addinglemma"))
 	senid = pickrandomsentence(current_user.currentlang,current_user.id)
@@ -55,8 +71,9 @@ def work():
 	files = getaudiofiles(audioids)
 	for i, file in enumerate(files, start=0):
 		files[i] = url_for('static', filename='/audio/' + file)
+	info = additionalinfo(current_user.currentlang, senid)
 	translation = getgoogle(senid, current_user.currentlang, getnativelang())
-	return render_template("work.html", text = text, audiofiles = files, translation=translation, senid=senid)
+	return render_template("work.html", text = text, audiofiles = files, translation=translation, senid=senid, info=info)
 
 @learn.route('/work/', methods=["POST"])
 @login_required

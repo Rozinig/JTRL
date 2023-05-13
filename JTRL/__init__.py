@@ -10,6 +10,12 @@ app = Flask(__name__)
 app.config.from_file("config.json", load=json.load)
 db.init_app(app)
 
+app.config['LANGS'] = {'cat': 'Catalan', 'cmn': 'Chinese', 'hrv': 'Croatian', 'dan':'Danish',
+	'nld': 'Dutch', 'eng': 'English', 'fin': 'Finnish', 'fra': 'French',
+	'deu': 'German', 'ell': 'Greek', 'ita': 'Italian', 'jpn': 'Japanese', 'kor': 'Korean',
+	'lit': 'Lithuanian', 'mkd':'Macedonian', 'nob': 'Norwegian', 'pol': 'Polish', 'por': 'Portuguese', 
+	'ron': 'Romanian', 'rus': 'Russian', 'spa': 'Spanish', 'swe': 'Swedish', 'ukr': 'Ukrainian'}
+
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.init_app(app)
@@ -68,6 +74,8 @@ for lang in nativelangs:
 		app.logger.info(f"Rebuilding {lang} json database. This might take a while...")
 		t = time.time()
 		processlangjson(lang)
+		processsubsjson(lang, [nativelang])
+		processmorphjson(targetlang, [nativelang])
 		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} json database")
 
 
