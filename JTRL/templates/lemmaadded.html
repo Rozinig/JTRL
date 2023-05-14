@@ -3,8 +3,7 @@
 {% block content %}
     <h1>{% block title %} Words Added {% endblock %}</h1>
     <h2>{{config['LANGS'][current_user.currentlang]}}</h2>
-    <h2>Here are the baes words that have been added based on your input.</h2>
-    <h3>New sentences will become available based on these words</h3>
+    <h2>Here are the base words that have been added based on your input.</h2>
     <div class="container">
         <ul>
             {% for lemma in lemmas %}
@@ -12,4 +11,40 @@
             {% endfor %}
         </ul>
     </div>
+    <div class="container">
+        <h2>Recommended Grammar</h2>
+        <h3>Select known on these grammar points to ensure all grammar from added sentences is available.</h3>
+        <form method="POST" action="/grammar">
+            <button class="button" name="button" value="{{newgrammar}}">Add Grammar</button>
+        {% for type in newgrammar %}
+                <table id={{type}}>
+                    <tr class="header">
+                        <th style="width:50%;">{{type}}</th>
+                        <th style="width:20%;">Even if unknown <input type="checkbox" id="{{type}}_unknown" onClick="checkfunction(this, '{{type}}', 'unknown')"></th>
+                        <th style="width:15%;">Known <input type="checkbox" id="{{type}}_known" onClick="checkfunction(this, '{{type}}', 'known')"></th>
+                        <th style="width:15%;">Focus <input type="checkbox" id="{{type}}_focus" onClick="checkfunction(this, '{{type}}', 'focus')"></th>
+                    </tr>
+                    {% for thing in newgrammar[type] %}
+                    <tr>
+                        <td>{{thing}}</td>
+                        <td><input type="checkbox" name="{{type}}_{{thing}}_unknown" class="{{type}}_unknown" {% if grammar[type][thing]["unknown"] %} checked {% endif %}></td>
+                        <td><input type="checkbox" name="{{type}}_{{thing}}_known" class="{{type}}_known" {% if grammar[type][thing]["known"] %} checked {% endif %}></td>
+                        <td><input type="checkbox" name="{{type}}_{{thing}}_focus" class="{{type}}_focus" {% if grammar[type][thing]["focus"] %} checked {% endif %}></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% endfor %}
+            <button class="button" name="button" value="{{newgrammar}}">Add Grammar</button>
+        </form>
+    </div>
+
+    <script>
+        function checkfunction(source, type, known) {
+            var checkboxes = document.getElementsByClassName(type +"_" + known);
+          for (var i in checkboxes){
+            checkboxes[i].checked = source.checked;
+          }
+        } 
+    </script>
+
 {% endblock %}

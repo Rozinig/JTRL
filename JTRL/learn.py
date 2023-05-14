@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import LoginManager, login_required, current_user
 from . import db
 from .database import *
-import json
+import json, datetime
 
 config = current_app.config
 logger = current_app.logger
@@ -29,8 +29,9 @@ def addinglemma():
 def lemmaadded():
 	words = request.form.get('words')
 	lemmas = addlemma(words, current_user.currentlang, current_user.id)
-	processsentencesjson(current_user.currentlang, current_user.id)
-	return render_template("lemmaadded.html", lemmas=lemmas)
+	newgrammar = pullgrammar(words, current_user.currentlang)
+	grammar = pullusergram(current_user.currentlang, current_user.id)
+	return render_template("lemmaadded.html", lemmas=lemmas, newgrammar=newgrammar, grammar=grammar)
 
 @learn.route("/lemma/close/")
 @login_required
@@ -46,7 +47,8 @@ def grammar():
 @learn.route("/grammar/", methods=["POST"])
 @login_required
 def grammarchange():
-	grammar = pullusergram(current_user.currentlang, current_user.id)
+	grammar = request.form.get('button')
+	grammar = json.loads(grammar.replace("'", '"'))
 	for gtype in grammar:
 		for thing in grammar[gtype]:
 			for know in grammar[gtype][thing]:
@@ -72,18 +74,40 @@ def work():
 	for i, file in enumerate(files, start=0):
 		files[i] = url_for('static', filename='/audio/' + file)
 	info = additionalinfo(current_user.currentlang, senid)
-	translation = getgoogle(senid, current_user.currentlang, getnativelang())
+	translation = getgoogle(senid, current_user.currentlang, current_user.nativelang)
+	if (current_user.streakdate == str(datetime.date.today())):
+		streakcount = False
+	else:
+		streakcount = True
+
 	return render_template("work.html", text = text, audiofiles = files, translation=translation, senid=senid, info=info)
 
 @learn.route('/work/', methods=["POST"])
 @login_required
 def workdone():
+	if (current_user.streakdate == str(datetime.date.today())):
+		pass
+	elif (current_user.streakdate == str(datetime.date.today()-datetime.timedelta(days=1))):
+		current_user.streaknum += 1
+		if (current_user.streaknum >= current_user.streakgoal):
+			current_user.streakdays += 1
+			current_user.streaknum = 0
+			current_user.streakdate = datetime.date.today()
+			flash("Congadulations you hit your goal for today!")
+	else:
+		current_user.streakdays = 0
+		current_user.streaknum = 1
+		current_user.streakdate = datetime.date.today()-datetime.timedelta(days=1)
+	current_user.totalsentences += 1
+	db.session.commit()
 	senid = request.form.get("next")
 	updatesentencelemma(senid, current_user.currentlang, current_user.id)
 	marksentence(senid, current_user.currentlang, current_user.id)
 	return redirect(url_for("learn.work"))
 
-def getnativelang():
-	print(current_user.settings)
-	info = json.loads(current_user.settings)
-	return info['natlang']
+@learn.route('/updating/')
+@login_required
+def updatesentences():
+	processsentencesjson(current_user.currentlang, current_user.id)
+	flash("Sentences Updated.")
+	return redirect(url_for("admin.home"))

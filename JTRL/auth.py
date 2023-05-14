@@ -25,17 +25,24 @@ def signup_post():
 	# code to validate and add user to database goes here
 	email = request.form.get('email').lower()
 	password = request.form.get('password')
+	password2 = request.form.get('pass')
 	lang = request.form.get('lang')
+
+	if (password != password2):
+		flash("Passwords don't match.")
+		return redirect(url_for('auth.signup'))
+
 
 	user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
 
 	if user: # if a user is found, we want to redirect back to signup page so user can try again
-		flash('Email address already exists')
+		flash('Email address already exists. Try logging in.')
 		return redirect(url_for('auth.signup'))
 
 	# create a new user with the form data. Hash the password so the plaintext version isn't saved.
 	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), emailauth=12345, 
-		authdate='1991-01-01', currentlang=lang, settings=json.dumps({"tarlangs":[lang], "natlang":"eng"}))
+		authdate='1991-01-01', currentlang=lang, nativelang='eng', settings=json.dumps({"tarlangs":[lang],}), 
+		streakdays=0, streakdate='1991-01-01', totalsentences=0, streakgoal = 10, streaknum = 0)
 
 	# add the new user to the database
 	db.session.add(new_user)
@@ -90,13 +97,43 @@ def forgotpress():
 
 	password = request.form.get("password")
 	code = request.form.get("code")
-	
+
 	if (code == str(user.emailauth) and user.authdate == str(datetime.date.today())):
 		user.password = generate_password_hash(password, method='sha256')
 		flash("Password Reset")
 		return redirect(url_for('auth.login'))
 	flash("Code does not match.")
 	return redirect(url_for('auth.forgot'))
+
+@auth.route('/change/', methods=['POST'])
+@login_required
+def change():
+	button = request.form.get('button')
+	if (button == "password"):
+		password = request.form.get('ogpassword')
+		if (check_password_hash(current_user.password, password)):
+			password = request.form.get('password')
+			password2 = request.form.get('pass')
+			if (password != password2):
+				flash("Passwords don't match.")
+				return redirect(url_for('admin.settings'))
+			current_user.password = generate_password_hash(password, method='sha256')
+			db.session.commit()
+			flash("Password Updated.")
+			return redirect(url_for("admin.home"))
+		else:
+			flash("Incorrect Password.")
+			return redirect(url_for("admin.settings"))
+	if (button == "email"):
+		email = request.form.get('email')
+		user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
+		if user: # if a user is found, we want to redirect back to signup page so user can try again
+			flash('Email address already exists. Please use a different email.')
+			return redirect(url_for('admin.settings'))
+		current_user.email = email
+		db.session.commit()
+		flash(f"Email changed to {email}.")
+		return redirect(url_for("admin.home"))
 
 @auth.route('/logout')
 @login_required

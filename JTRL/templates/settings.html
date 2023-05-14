@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="column is-4 is-offset-4">
-    <h3 class="title">Sign Up</h3>
-    <div class="container">
+<div class="container">
+    <h1>{% block title %} Settings {% endblock %}</h1>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="notification is-danger">
@@ -11,11 +10,12 @@
             </div>
         {% endif %}
         {% endwith %}
-        <form method="POST" action="/signup">
-            <label for="email">Email</label>
+    <h2> Change Password</h2>
+        <form method="POST" action="/change">
+            <label for="ogpassword">Current Password</label>
             <div class="field">
                 <div class="control">
-                    <input type="email" id ="email" name="email" placeholder="example@domain.com" autofocus="" title="Email">
+                    <input class="input is-large" type="password" name="ogpassword" placeholder="Current Password">
                 </div>
             </div>
             <p></p>
@@ -23,7 +23,7 @@
             <label for="password">Password</label>
             <div class="field" onkeyup="criteria()">
                 <div class="control">
-                    <input type="password" id="password" name="password" placeholder="Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Password">
+                    <input type="password" id="password" name="password" placeholder="New Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="New Password">
                 </div>
 
             <label for="password">Reenter Password</label>
@@ -32,14 +32,7 @@
                 </div>
             </div>
             <p></p>
-            <label for="lang">What language would you like to learn? You can add more later.</label>
-            <select id="lang" name="lang">
-                {% for lang in langs %}
-                <option value="{{lang}}">{{langs[lang]}}</option>
-                {% endfor %}
-            </select>
-
-            <button>Sign Up</button>
+            <button name="button" value="password">Change Password</button>
 
         </form>
         <div id="passmessage">
@@ -50,8 +43,66 @@
           <p id="length" class="invalid">Minimum <b>8 characters</b></p>
           <p id="match" class="invalid">Passwords must <b>match</b></p>
         </div>
-    </div>
-    <script>
+
+        <p></p>
+            <p></p>
+    {% if lenalangs > 0 %}
+    <h2> Add Language</h2>
+        <form action="" method="POST">
+            <label for="lang">What language would you like to add?</label>
+            <select id="lang" name="lang">
+                {% for lang in alangs %}
+                <option value="{{lang}}">{{alangs[lang]}}</option>
+                {% endfor %}
+            </select>
+
+            <button name="button" value="addlang">Add Language</button>
+        </form>
+    {% endif %}
+            <p></p>
+    {% if lenrlangs > 1 %}
+    <h2> Remove Language </h2>
+        <form action="" method="POST">
+            <label for="lang">What language would you like to remove?</label>
+            <select id="lang" name="lang">
+                {% for lang in rlangs %}
+                <option value="{{lang}}">{{rlangs[lang]}}</option>
+                {% endfor %}
+            </select>
+
+            <button name="button" value="removelang">Remove Language</button>
+        </form>
+    {% endif %}
+            <p></p>
+    {% if lennlangs > 0 %}
+    <h2>Native Language </h2>
+        <form action="" method="POST">
+            <p>Your current native language is {{nativelang}}</p>
+            <label for="lang">Select your native Language</label>
+            <select id="lang" name="lang">
+                {% for lang in nlangs %}
+                <option value="{{lang}}">{{nlangs[lang]}}</option>
+                {% endfor %}
+            </select>
+
+            <button name="button" value="nativelang">Change Native Language</button>
+        </form>
+    {% endif %}
+            <p></p>
+    <h2> Set Streak goal </h2>
+        <form action="" method="POST">
+            <input type="number" min="1" max="500" id="goal" name="goal" value={{streakgoal}}>
+            <button name="button" value="goal">Update Streak Goal</button>
+        </form>
+            <p></p>
+    <h2> Change Email </h2>
+    <p>Your current email is {{current_user.email}}</p>
+        <form action="/change" method="POST">
+            <input class="input is-large" type="email" name="email" placeholder="example@domain.com">
+            <button name="button" value="email">Update Email</button>
+        </form>
+</div>
+<script>
     var myInput = document.getElementById("password");
     var reInput = document.getElementById("pass");
     var letter = document.getElementById("letter");
@@ -124,5 +175,4 @@
       }
     }
     </script>
-</div>
 {% endblock %}

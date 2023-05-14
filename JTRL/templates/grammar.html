@@ -5,7 +5,7 @@
     <h2> {{config['LANGS'][current_user.currentlang]}} </h2>
     <h2>Select the grammar for known sentences</h2>
 <form method="POST" action="/grammar">
-    <button class="button">Save Grammar</button>
+    <button class="button" name="button" value="{{grammar}}">Save Grammar</button>
 {% for type in grammar %}
         <table id={{type}}>
             <tr class="header">
@@ -23,8 +23,9 @@
             </tr>
             {% endfor %}
         </table>
+        <br>
     {% endfor %}
-    <button class="button">Save Grammar</button>
+    <button class="button" name="button" value="{{grammar}}">Save Grammar</button>
 </form>
 
     <script>

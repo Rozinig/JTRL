@@ -11,11 +11,32 @@
             </div>
         {% endif %}
         {% endwith %}
+        <h2> Your current Streak is {{current_user.streakdays}}. </h2>
     <div>
-        <h2>
             <p>
-                Lets study!
+                <button onclick="window.location.href='{{ url_for('learn.work') }}';">Lets Study</button>
             </p>
-        </h2>
+            <p>
+                <button onclick="window.location.href='{{ url_for('learn.addinglemma') }}';">Add Words</button>
+            </p>
+            <p>
+                <button onclick="window.location.href='{{ url_for('learn.grammar') }}';">Add Grammar</button>
+            </p>
+            <p>
+                <button onclick="window.location.href='{{ url_for('learn.updatesentences') }}';">Update Available Sentences</button>
+                Takes about a minute, only run after finished adding words and grammar
+            </p>
+            {% if lenlangs > 0 %}
+        <form action="" method="POST">
+            <label for="lang">Switch Language</label>
+            <select id="lang" name="lang">
+                {% for lang in langs %}
+                <option value="{{lang}}">{{langs[lang]}}</option>
+                {% endfor %}
+            </select>
+
+            <button name="button" value="switch">Switch Language</button>
+        </form>
+        {% endif %}
     </div>
 {% endblock %}

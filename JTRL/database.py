@@ -23,8 +23,14 @@ if __name__ == '__main__':
 	fh.setFormatter(formatter)
 	logger.addHandler(fh)
 	import parser
+	with open('./JTRL/config.json','r') as file:
+		file = json.load(file)
+		parser = parser.parser(fast=file['PARSER_FAST'])
 else:
 	from . import parser
+	with open('./JTRL/config.json','r') as file:
+		file = json.load(file)
+		parser = parser.parser(fast=file['PARSER_FAST'])
 
 gtd = {'cat': 'ca', 'cmn': 'zh-CN', #traditional chinese 'cmn': 'zh-TW', 
 	'hrv': 'hr', 'dan': 'da', 'nld': 'nl', 'eng': 'en', 'fin': 'fi', 'fra': 'fr',
@@ -32,8 +38,6 @@ gtd = {'cat': 'ca', 'cmn': 'zh-CN', #traditional chinese 'cmn': 'zh-TW',
 	'lit': 'lt', 'mkd': 'mk', 'nob': 'no', 'pol': 'pl', 'por': 'pt', 
 	'ron': 'ro', 'rus': 'ru', 'spa': 'es', 'swe': 'sv', 'ukr': 'uk'}
 
-
-parser = parser.parser(fast=True)
 
 def test():
 	i=0
@@ -107,6 +111,28 @@ def addlemma(words, lang, user):
 	pon.commit()
 	pon.close()
 	return lemmas
+
+def pullgrammar(words, lang):
+	cur, con = langdatabase(lang)
+	parsed =parser.parse(words, lang)
+	grammar = {'tag':{}, 'POS':{}, 'ent_type':{}}
+	for token in parsed:
+		tokendict = token.morph.to_dict()
+		for morph in tokendict:
+			if (morph != 'Reading'):
+				if (not morph in grammar):
+					grammar[morph] = {}
+				if (not tokendict[morph] in grammar[morph]):
+					grammar[morph][tokendict[morph]] = {'unknown': 0, 'known': 1, 'focus': 0}
+		if (not token.tag_ in grammar['tag']):
+			grammar['tag'][token.tag_] = {'unknown': 0, 'known': 1, 'focus': 0}
+		if (not token.pos_ in grammar['POS']):
+			grammar['POS'][token.pos_] = {'unknown': 0, 'known': 1, 'focus': 0}
+		if (not token.ent_type_ in grammar['ent_type'] and not token.ent_type_ == ''):
+			grammar['ent_type'][token.ent_type_] = {'unknown': 0, 'known': 1, 'focus': 0}
+
+	con.close()
+	return grammar
 
 def updatelemma(lemma, lang, user): 
 	pur, pon = userdatabase(user)
@@ -482,7 +508,7 @@ def pushusergrammar(lang, user, grammar):
 def pullusergram(lang, user):
 	#Wrapper to allow grammar to be refined for Spacy's grammar to Language learner grammar needs be the opposite of pushusergram
 	grammar = pullusergrammar(lang, user)
-	print(grammar['ent_type'].pop('', None))
+	grammar['ent_type'].pop('', None)
 	return grammar
 
 def pushusergram(lang, user, grammar):
@@ -493,9 +519,7 @@ def pushusergram(lang, user, grammar):
 def additionalinfo(lang, num):
 	cur, con = langdatabase(lang)	
 	if (lang == 'jpn'):
-		print(num)
 		info = cur.execute(f"SELECT id, json FROM {lang}_json WHERE id = {num}").fetchone()
-		print(info)
 		tokens = json.loads(info['json'])
 		reading = ""
 		for token in tokens:
@@ -530,7 +554,7 @@ def touchuserdb(lang, user, db):
 def pickrandomsentence(lang, user):
 	pur, pon = userdatabase(user)
 	count = pur.execute(f"SELECT COUNT(*) FROM {lang}_available_sentences").fetchone()[0]
-	number =randrange(count)
+	number =randrange(1,count)
 	print(number)
 	sentence = pur.execute(f"SELECT id FROM {lang}_available_sentences WHERE rowid = ?",(number,)).fetchone()['id']
 	pon.close()
@@ -675,7 +699,7 @@ if __name__ == '__main__' :
 	#test()
 	#processlangjson(targetlang)
 	#processsentencesjson(targetlang, user)
-	#processsentencesraw(targetlang, user)
+	#processsentencesraw(targetlang, user)timedelta(days=1)
 	#updatelemma("は", targetlang, user)
 	#print(getalllemmainfo(targetlang, user)[0]['lemma'])
 	#print("Japanse Json? ", touchjson(targetlang))

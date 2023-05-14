@@ -3,6 +3,16 @@
 {% block content %}
 <div class="work">
     <h1>{% block title %} Practice {{config['LANGS'][current_user.currentlang]}}{% endblock %}</h1>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+        {% if streakcount %}
+        <h3> You've doen {{current_user.streaknum}} out of {{current_user.streakgoal}} sentences today.</h3>
+        {% endif %}
     <div id="audio">
         {% for audiofile in audiofiles %}
         <audio controls>

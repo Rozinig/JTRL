@@ -61,7 +61,6 @@ if (app.config['FORCE_REBUILT']):
 	if (test != "Y" and test != "YES"):
 		app.config['FORCE_REBUILT'] = False
 
-
 for lang in nativelangs:
 	dbexists = os.path.isfile(f'./lang/{lang}.db')
 	if ((not dbexists or app.config['FORCE_REBUILT']) and (nativelangs[lang] or targetlangs[lang])):
