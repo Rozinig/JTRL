@@ -114,16 +114,6 @@ def updatesettings():
 		db.session.commit()
 		flash(f"Your native language has been changed to {config['LANGS'][current_user.nativelang]}.")
 		return redirect(url_for("admin.home"))
-	if (button == "email"):
-		email = request.form.get('email')
-		user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
-		if user: # if a user is found, we want to redirect back to signup page so user can try again
-			flash('Email address already exists. Try logging in.')
-			return redirect(url_for('admin.settings'))
-		current_user.email = email
-		db.session.commit()
-		flash(f"Email changed to {email}.")
-		return redirect(url_for("admin.home"))
 
 	flash("There was an error updating settings.")
 	return redirect(url_for("admin.home"))

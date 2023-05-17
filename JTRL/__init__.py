@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from markupsafe import escape
+#from multiprocessing import Pool
 import time, json, os
 from .database import *
 
@@ -55,37 +56,44 @@ databaselogger.addHandler(fh)
 nativelangs = app.config['NATIVE_LANG']
 targetlangs = app.config['TARGET_LANG']
 
-if (app.config['FORCE_REBUILT']):
+if (app.config['FORCE_REBUILD']):
 	test = input("Config file is set to force rebuilt. Are you sure you want to contiune? (Y/N):")
 	test = test.upper()
 	if (test != "Y" and test != "YES"):
-		app.config['FORCE_REBUILT'] = False
+		app.config['FORCE_REBUILD'] = False
 
-for lang in nativelangs:
-	dbexists = os.path.isfile(f'./lang/{lang}.db')
-	if ((not dbexists or app.config['FORCE_REBUILT']) and (nativelangs[lang] or targetlangs[lang])):
-		app.logger.info(f"Rebuilding {lang} database. This might take a while...")
-		t = time.time()
-		loadlang(lang)
-		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} database")
-
-	if ((not dbexists or app.config['FORCE_REBUILT'] or  not touchlangdb(lang,f"{lang}_json")) and targetlangs[lang]):
-		app.logger.info(f"Rebuilding {lang} json database. This might take a while...")
-		t = time.time()
-		processlangjson(lang)
-		processsubsjson(lang, [nativelang])
-		processmorphjson(targetlang, [nativelang])
-		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} json database")
-
-
-if (not os.path.exists('./lang/all_lang.db')):
+if (not os.path.exists('./lang/all_lang.db' or app.config['FORCE_REBUILD'])):
 	t = time.time()
 	app.logger.info("Rebuilding all_lang database. This might take a while...")
-	#loadaux('tags')
-	loadaux('links')
-	loadaux('sentences_with_audio') #need to exclude Create commons
+	loadaux()
 	app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild all_lang database")
 
+if (False):
+#for lang in nativelangs:
+#def buildlang(lang):
+	dbexists = os.path.isfile(f'./lang/{lang}.db')
+	if ((not dbexists or app.config['FORCE_REBUILD']) and (nativelangs[lang] or targetlangs[lang])):
+		app.logger.info(f"Rebuilding {lang} database.")
+		t = time.time()
+		createlangdb(lang)
+		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} database")
+
+#def buildlangdata(lang):
+	if ((not dbexists or app.config['FORCE_REBUILD'] or  not touchlangdb(lang,f"{lang}_morphs")) and targetlangs[lang]):
+		app.logger.info(f"Rebuilding {lang} json database. This might take a while...")
+		t = time.time()
+		for column in ['json', 'audio', 'trans']:
+			filldb(column, targetlang)
+		processsubs(lang, nativelangs)
+		processmorph(lang, nativelangs)
+		app.logger.info(f"It took {(time.time()-t)/60} minutes to rebuild {lang} json database")
+
+'''print("made it here")
+with Pool() as p:
+	info = [lang for lang in nativelangs]
+	p.map(buildlang, info) 
+	print("and even here")
+	p.map(buildlangdata, info) '''
 
 with app.app_context():
 	# blueprint for auth routes in our app

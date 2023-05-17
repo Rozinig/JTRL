@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import LoginManager, login_required, current_user
 from . import db
 from .database import *
-import json, datetime
+import json, datetime, time
 
 config = current_app.config
 logger = current_app.logger
@@ -28,10 +28,10 @@ def addinglemma():
 @login_required
 def lemmaadded():
 	words = request.form.get('words')
-	lemmas = addlemma(words, current_user.currentlang, current_user.id)
-	newgrammar = pullgrammar(words, current_user.currentlang)
+	lemmas, newgrammar = addlemmagrammar(words, current_user.currentlang, current_user.id)
 	grammar = pullusergram(current_user.currentlang, current_user.id)
-	return render_template("lemmaadded.html", lemmas=lemmas, newgrammar=newgrammar, grammar=grammar)
+	grammarinfo = pullgrammartrans(current_user.currentlang)
+	return render_template("lemmaadded.html", lemmas=lemmas, newgrammar=newgrammar, grammar=grammar, grammarinfo=grammarinfo)
 
 @learn.route("/lemma/close/")
 @login_required
@@ -42,7 +42,8 @@ def closelemma():
 @login_required
 def grammar():
 	grammar = pullusergram(current_user.currentlang, current_user.id)
-	return render_template("grammar.html", grammar=grammar)
+	grammarinfo = pullgrammartrans(current_user.currentlang)
+	return render_template("grammar.html", grammar=grammar, grammarinfo=grammarinfo)
 
 @learn.route("/grammar/", methods=["POST"])
 @login_required
@@ -63,24 +64,25 @@ def grammarchange():
 @learn.route("/work/")
 @login_required
 def work():
+	t = time.time()
 	if not touchuserdb(current_user.currentlang, current_user.id, f"{current_user.currentlang}_available_sentences"):
 		flash("You don't have any sentences available. Try adding more words.")
 		return redirect(url_for("learn.addinglemma"))
-	senid = pickrandomsentence(current_user.currentlang,current_user.id)
-	logger.info(f"Sentence id {senid}")
-	text = gettext(senid, current_user.currentlang)
-	audioids = getaudioids(senid)
-	files = getaudiofiles(audioids)
-	for i, file in enumerate(files, start=0):
+
+	sentence = picksentence(current_user.currentlang,current_user.id)
+	info = additionalinfo(current_user.currentlang, sentence)
+	files = []
+	for i, file in enumerate(json.loads(sentence['audio']), start=0):
 		files[i] = url_for('static', filename='/audio/' + file)
-	info = additionalinfo(current_user.currentlang, senid)
-	translation = getgoogle(senid, current_user.currentlang, current_user.nativelang)
+	translation = getgoogle(sentence['text'], current_user.currentlang, current_user.nativelang)
+	if (sentence['trans'] != None):
+		trans = getlations(json.loads(sentence['trans']), current_user.nativelang)
 	if (current_user.streakdate == str(datetime.date.today())):
 		streakcount = False
 	else:
 		streakcount = True
-
-	return render_template("work.html", text = text, audiofiles = files, translation=translation, senid=senid, info=info)
+	logger.info(f"total sentence load time was {time.time()-t}")
+	return render_template("work.html", text = sentence['text'], audiofiles = files, translation=translation, senid=sentence['id'], info=info, streakcount=streakcount)
 
 @learn.route('/work/', methods=["POST"])
 @login_required
@@ -108,6 +110,6 @@ def workdone():
 @learn.route('/updating/')
 @login_required
 def updatesentences():
-	processsentencesjson(current_user.currentlang, current_user.id)
+	processsentences(current_user.currentlang, current_user.id)
 	flash("Sentences Updated.")
 	return redirect(url_for("admin.home"))

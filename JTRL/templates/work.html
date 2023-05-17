@@ -11,7 +11,7 @@
         {% endif %}
         {% endwith %}
         {% if streakcount %}
-        <h3> You've doen {{current_user.streaknum}} out of {{current_user.streakgoal}} sentences today.</h3>
+        <h3> You've done {{current_user.streaknum}} out of {{current_user.streakgoal}} sentences today to reach your goal.</h3>
         {% endif %}
     <div id="audio">
         {% for audiofile in audiofiles %}
@@ -26,7 +26,7 @@
             {{text}}
         </h2>
     </div> 
-         <button onclick="myFunction()">Show English</button>
+         <button onclick="myFunction()">Show Translation</button>
     <div id="translation">
         {% if info %}
         <h3>{{info}}</h3>
