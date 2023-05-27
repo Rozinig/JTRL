@@ -20,6 +20,7 @@ Setup:
 	pip install python-vlc
 	pip install Flask flask-login flask_sqlalchemy
 	pip install jaconv
+	pip install psycopg2-binary
 
 	export FLASK_APP=.
 	export FLASK_DEBUG=1
