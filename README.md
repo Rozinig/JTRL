@@ -22,6 +22,7 @@ Setup:
 	pip install jaconv
 
 	export FLASK_APP=.
+	???export FLASK_APP=JTRL
 	export FLASK_DEBUG=1
 
 Run:

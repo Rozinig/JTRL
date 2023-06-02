@@ -72,8 +72,11 @@ def work():
 	sentence = picksentence(current_user.currentlang,current_user.id)
 	info = additionalinfo(current_user.currentlang, sentence)
 	files = []
-	for i, file in enumerate(json.loads(sentence['audio']), start=0):
-		files[i] = url_for('static', filename='/audio/' + file)
+
+	if (json.loads(sentence['audio']) != None):
+		for i, file in enumerate(json.loads(sentence['audio']), start=0):
+			files[i] = url_for('static', filename='/audio/' + file)
+
 	translation = getgoogle(sentence['text'], current_user.currentlang, current_user.nativelang)
 	if (sentence['trans'] != None):
 		trans = getlations(json.loads(sentence['trans']), current_user.nativelang)
