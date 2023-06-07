@@ -19,13 +19,13 @@
 	"lit": false, "mkd":false, "nob": false, "pol": false, "por": false, 
 	"ron": false, "rus": false, "spa": false, "swe": false, "ukr": false},
 
-	"FORCE_REBUILT":false,
+	"FORCE_REBUILD":false,
 
 	"PARSER_FAST":true,
 
 	"CONTACT_EMAIL":{"email":"williammadson@gmail.com",
 
-					"pass":"password",
+					"pass":"oeihowevrbilfqbn",
 
 					"server":"smtp.gmail.com",
 

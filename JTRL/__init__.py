@@ -9,6 +9,7 @@ from .database import *
 db = SQLAlchemy()
 app = Flask(__name__)
 app.config.from_file("config.json", load=json.load)
+app.config['CONTACT_EMAIL'] ={ 'email':os.environ['EMAIL_ADDRESS'],'pass':os.environ['EMAIL_PASSWORD'],'server':os.environ['EMAIL_SERVER'],'port':os.environ['EMAIL_PORT']}
 db.init_app(app)
 
 app.config['LANGS'] = {'cat': 'Catalan', 'cmn': 'Chinese', 'hrv': 'Croatian', 'dan':'Danish',
@@ -29,6 +30,7 @@ def load_user(user_id):
 
 
 with app.app_context():
+	db.drop_all()
 	db.create_all()
 
 loglevel = {'DEBUG': 10, 'INFO': 20, 'WARNING': 30, 'ERROR': 40}

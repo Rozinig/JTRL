@@ -22,8 +22,14 @@ Setup:
 	pip install jaconv
 	pip install psycopg2-binary
 
-	export FLASK_APP=.
+	export FLASK_APP=.  
+	???export FLASK_APP=JTRL
 	export FLASK_DEBUG=1
+	export EMAIL_ADDRESS=
+	export EMAIL_PASSWORD=
+	export EMAIL_SERVER=
+	export EMAIL_PORT =
+
 
 Run:
 	flask run
