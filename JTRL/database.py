@@ -1,54 +1,16 @@
 from deep_translator import GoogleTranslator as gt
 from random import randrange
 from multiprocessing import Pool
-#import vlc
 import sqlite3, datetime, wget, os, bz2, time, logging, json, jaconv
-	
-path = './tatoeba/'
-http = 'https://downloads.tatoeba.org/exports/'
-dirs = ['./lang/', './user/', './tatoeba/', './static/', './JTRL/static/audio/', './logs/']
-for pathway in dirs:
-	if (not os.path.exists(pathway)):
-		os.mkdir(pathway)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-if __name__ == '__main__':
-	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-	ch = logging.StreamHandler()
-	ch.setLevel(logging.INFO)
-	ch.setFormatter(formatter)
-	logger.addHandler(ch)
-	fh = logging.FileHandler('./logs/database.log')
-	fh.setLevel(logging.DEBUG)
-	fh.setFormatter(formatter)
-	logger.addHandler(fh)
-	import parser
-else:
-	from . import parser
-
-with open('./JTRL/config.json','r') as file:
-	file = json.load(file)
-	parser = parser.parser(fast=file['PARSER_FAST'])
 
 gtd = {'cat': 'ca', 'cmn': 'zh-CN', #traditional chinese 'cmn': 'zh-TW', 
 	'hrv': 'hr', 'dan': 'da', 'nld': 'nl', 'eng': 'en', 'fin': 'fi', 'fra': 'fr',
 	'deu': 'de', 'ell': 'el', 'ita': 'it', 'jpn': 'ja', 'kor': 'ko',
 	'lit': 'lt', 'mkd': 'mk', 'nob': 'no', 'pol': 'pl', 'por': 'pt', 
 	'ron': 'ro', 'rus': 'ru', 'spa': 'es', 'swe': 'sv', 'ukr': 'uk'}
-
-def langdatabase(lang): 
-	con = sqlite3.connect(f"./lang/{lang}.db")
-	con.row_factory = sqlite3.Row
-	cur = con.cursor()
-	logger.debug(f'Connected to {lang} Database.')
-	return cur, con
-
-def userdatabase(user): 
-	pon=sqlite3.connect(f"./user/{user}.db")
-	pon.row_factory = sqlite3.Row
-	logger.debug(f"Connected to {user}'s Database")
-	return pon.cursor(), pon
 
 def addlemmagrammar(words, lang, user):
 	pur, pon = userdatabase(user)
@@ -151,118 +113,6 @@ def getalllemmainfo(lang,user):
 	pon.close()
 	logger.info(f"Retrieved all known lemma for {user}")
 	return info
-
-def loadaux():
-	lur, lon = langdatabase('all_lang')
-	for aux in ['links', 'tags', 'sentences_with_audio']:
-		filename =f"{aux}.tar.bz2"
-
-		if (os.path.isfile('./tatoeba/' + filename)):
-			if (time.time()-os.path.getmtime(f"./tatoeba/{filename}")>604800):
-				os.remove('./tatoeba/' + filename)
-				wget.download(f"{http}{filename}", './tatoeba/')
-		else:
-			wget.download(f"{http}{filename}", './tatoeba/')
-
-		file = bz2.open(f"./tatoeba/{filename}", "r")
-
-		lur.execute(f"DROP TABLE IF EXISTS {aux}")
-		lur.execute(f"CREATE TABLE {aux}(id, data)")
-
-		for line in file:
-			try:
-				line = str(line[:-1],'UTF-8').split("\t")
-				if (aux !='sentences_with_audio' or line[3] != ''):
-					lur.execute(f"INSERT INTO {aux} VALUES (?,?)",line[:2])
-			except:
-				pass
-		logger.info(f'all_lang database {aux} rebuilt')
-	lon.commit()
-	lon.close()
-
-def createlangdb(lang, update=True):
-	t = time.time()
-	cur, con = langdatabase(lang)
-
-	filename =f"{lang}_sentences.tsv.bz2"
-
-
-	if (os.path.isfile('./tatoeba/' + filename)):
-		if (time.time()-os.path.getmtime(f"./tatoeba/{filename}")>604800):
-			os.remove('./tatoeba/' + filename)
-			wget.download(f"{http}per_language/{lang}/{filename}", './tatoeba/')
-	else:
-		wget.download(f"{http}per_language/{lang}/{filename}", './tatoeba/')
-
-	file = bz2.open(f"./tatoeba/{filename}", "r")
-
-	if (update):
-		if (cur.execute(f"SELECT name FROM sqlite_master WHERE name = '{lang}_db'").fetchone() is None):
-			cur.execute(f"CREATE TABLE {lang}_db('id' INTEGER PRIMARY KEY, text TEXT, json TEXT, audio TEXT, trans TEXT, tags TEXT, control TEXT, available TEXT) WITHOUT ROWID")
-	else:
-		cur.execute(f"DROP TABLE IF EXISTS {lang}_db")
-		cur.execute(f"CREATE TABLE {lang}_db('id' INTEGER PRIMARY KEY, text TEXT, json TEXT, audio TEXT, trans TEXT, tags TEXT, control TEXT, available TEXT) WITHOUT ROWID")
-
-	date = str(datetime.date.today())
-
-	for line in file: 
-		line = str(line[:-1],'UTF-8').split("\t") #line[0] = id, line[1]= lang, line[2]= text
-		if (update):
-			test = cur.execute(f"SELECT id, text FROM {lang}_db WHERE id = '{line[0]}'").fetchone()
-			if (test == None):
-				cur.execute(f"INSERT INTO {lang}_db VALUES (?,?,?,?,?,?,?,?)",(line[0], line[2], None, None, None, None, 0, date))
-			elif line[0] == str(test['id']):
-				if not line[2] == test['text']:
-					cur.execute(f"UPDATE {lang}_db SET text = ?, json = ?, audio = ?, trans = ?, tags = ?, control = ?, available = ? WHERE id = ?",(line[2], None, None, None, None, 0, date, line[0]))
-				else:
-					cur.execute(f"UPDATE {lang}_db SET available = ?  WHERE id = ?",(date, line[0]))
-		else:
-			cur.execute(f"INSERT INTO {lang}_db VALUES (?,?,?,?,?,?,?,?)",(line[0], line[2], None, None, None, None, 0, date))
-
-	for row in cur.execute(f"SELECT id FROM {lang}_db WHERE available != '{date}'").fetchall():
-		cur.execute(f"UPDATE {lang}_db SET available = ?  WHERE id = ?",(0, row['id']))
-
-	con.commit()
-	con.close()
-	totaltime = (time.time()-t)/60
-	logger.info(f"Took {totaltime} mintues to create {lang}_db")
-	logger.info(f"{lang}_db created and text updated. Need to update other columns")
-
-def filldb(column, lang, oldcontrol = None, newcontrol = 0):
-	cur, con = langdatabase(lang)
-	i=0
-	if (oldcontrol == None):
-		rows = cur.execute(f"SELECT id, text FROM {lang}_db WHERE {column} is NULL ").fetchall()
-	else:
-		rows = cur.execute(f"SELECT id, text FROM {lang}_db WHERE control = '{oldcontrol}'").fetchall()
-	length = len(rows)
-	for row in rows:
-		i += 1
-		if column == 'json':
-			parsed =parser.parse(row['text'], lang)
-			tokens =[]
-			for token in parsed:
-				bit = {'text':token.text, 'lemma':token.lemma_.lower().strip(), 'POS':token.pos_, 'ent_type':token.ent_type_, 'tag':token.tag_, 'morph':token.morph.to_dict()}
-				tokens.append(bit)
-			info = json.dumps(tokens, ensure_ascii=False).encode('utf8')
-		elif column == 'audio':
-			info = json.dumps(getaudiofiles(row['id']))
-		elif column == 'trans':
-			info = json.dumps(gettrans(row['id']))
-		elif column == 'tags':
-			info = json.dumps(gettags(row['id']))
-		elif column == 'control':
-			info = 0
-		if (oldcontrol == None):
-			cur.execute(f"UPDATE {lang}_db SET {column} = ? WHERE id = ?",(info, row['id']))
-		else:
-			cur.execute(f"UPDATE {lang}_db SET {column} = ?, control = ? WHERE id = ?",(info, newcontrol, row['id']))
-		if (i%100 == 0):
-			logger.info(f"{i} out of {length} sentences completed for {lang} for {column}")
-			print(f"{i} out of {length} sentences completed for {lang} for {column}")
-			con.commit()
-	con.commit()
-	con.close()
 
 def processsubs(targetlang, nativelangs): 
 	t = time.time()
@@ -484,26 +334,6 @@ def createusergrammar(lang, user):
 	pon.commit()
 	pon.close()
 
-def pullusergrammar(lang, user):
-	db = f'{lang}_tag'
-	if (not touchuserdb(lang, user, db)):
-		createusergrammar(lang, user)
-	pur, pon = userdatabase(user)
-	grammar = {}
-	subs = ['tag', 'ent_type', 'POS']
-	for row in pur.execute(f"SELECT morph FROM {lang}_morphs").fetchall():
-		subs.append(sqlsafe(row['morph']))
-
-	for sub in subs:
-		grammar[sub] = {}
-		for each in pur.execute(f"SELECT {sub}, unknown, known, focus FROM {lang}_{sub}").fetchall():
-			grammar[sub][each[sub]] = {'unknown':each['unknown'], 'known':each['known'], 'focus':each['focus']}
-
-
-	pon.commit()
-	pon.close()
-	return grammar
-
 def pullgrammartrans(lang):
 	cur, con = langdatabase(lang)	
 	grammar = {}
@@ -532,17 +362,6 @@ def pushusergrammar(lang, user, grammar):
 	pon.commit()
 	pon.close()
 
-def pullusergram(lang, user):
-	#Wrapper to allow grammar to be refined for Spacy's grammar to Language learner grammar needs be the opposite of pushusergram
-	grammar = pullusergrammar(lang, user)
-	grammar['ent_type'].pop('', None)
-	return grammar
-
-def pushusergram(lang, user, grammar):
-	#Wrapper to allow grammar to be refined for Spacy's grammar to Language learner grammar needs be the opposite of pullusergram
-	grammar['ent_type'][''] = {'unknown': 0, 'known': 1, 'focus': 0}
-	return pushusergrammar(lang, user, grammar)
-
 def additionalinfo(lang, sentence): 
 	info = None
 	if (lang == 'jpn'):
@@ -555,26 +374,6 @@ def additionalinfo(lang, sentence):
 				reading += '?'
 		info = jaconv.kata2hira(reading)
 	return info
-
-def touchlangdb(lang, db):
-	cur, con = langdatabase(lang)	
-	touch = cur.execute(f"SELECT name FROM sqlite_master WHERE name = '{db}'").fetchone()
-	con.close()
-	if (touch is None):
-		return False
-	return True
-
-def touchuserdb(lang, user, db):
-	pur, pon = userdatabase(user)
-	touch = pur.execute(f"SELECT name FROM sqlite_master WHERE name = '{db}'").fetchone()
-	if (touch is None):
-		pon.close()
-		return False
-	count = pur.execute(f"SELECT COUNT(*) FROM {db}").fetchone()[0]
-	pon.close()
-	if (count == 0):
-		return False
-	return True
 
 def picksentence(lang, user, way = 'random'): #TODO Needs to be improved auto check old lemma and focus grammar also SRS with alreaady seen
 	pur, pon = userdatabase(user)
@@ -649,30 +448,6 @@ def getaudiofiles(num):
 			logger.info(f'Audio file for {filename} already downloaded')
 	lon.close()
 	return files
-
-def gettags(num):
-	lur, lon = langdatabase('all_lang')
-	tags = lur.execute(f"SELECT data FROM tags WHERE id = '{num}'").fetchall()
-	lon.close()
-	logger.info(f'Tags for sentence {num} are {tags}')
-	tags = [i[0] for i in tags]
-	return tags
-
-def sqlsafe(morph):
-	morph1 = morph.split(']')
-	morph2 = morph1[0].split('[')
-	morph = "_".join(morph2)
-	return morph
-
-def resetdb(column, targetlangs):
-	for lang in targetlangs:
-	#	createlangdb(targetlang)
-		cur, con = langdatabase(lang)
-		rows = cur.execute(f"SELECT id, text FROM {lang}_db").fetchall()
-		for row in rows:
-			cur.execute(f"UPDATE {lang}_db SET {column} = ?, control = ? WHERE id = ?",(None, 0, row['id']))
-		con.commit()
-		con.close()
 
 
 

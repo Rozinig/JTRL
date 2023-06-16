@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
-from .models import User
+from .models import User, Lang
 from . import db, mail
 import json, datetime, random
 
@@ -39,10 +39,11 @@ def signup_post():
 		flash('Email address already exists. Try logging in.')
 		return redirect(url_for('auth.signup'))
 
+	sqllang = Lang.query.filter(Lang.code == lang).first()
 	# create a new user with the form data. Hash the password so the plaintext version isn't saved.
-	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), emailauth=12345, 
-		authdate='1991-01-01', currentlang=lang, nativelang='eng', settings=json.dumps({"tarlangs":[lang],}), 
-		streakdays=0, streakdate='1991-01-01', totalsentences=0, streakgoal = 10, streaknum = 0)
+	new_user = User(email=email, password=generate_password_hash(password, method='sha256'), 
+		currentlang_code=lang, nativelang_code='eng')
+	new_user.targetlangs.append(sqllang)
 
 	# add the new user to the database
 	db.session.add(new_user)
@@ -78,7 +79,7 @@ def forgot():
 	return render_template("forgotpassword.html")
 
 @auth.route('/forgot', methods=['POST'])
-def forgotpress():
+def forgotpass():
 	test = request.form.get("button")
 	email = request.form.get("email").lower()
 	user = User.query.filter_by(email=email).first()

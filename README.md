@@ -13,11 +13,9 @@ Setup:
 	source .env/bin/activate
 	pip install -U pip setuptools wheel
 	pip install -U spacy
-	python -m spacy download en_core_web_sm		
-	python -m spacy download ja_core_news_sm
 	pip install -U deep-translator
 	pip install wget
-	pip install python-vlc
+	pip install tatoebatools
 	pip install Flask flask-login flask_sqlalchemy
 	pip install jaconv
 	pip install psycopg2-binary
@@ -25,10 +23,11 @@ Setup:
 	export FLASK_APP=.  
 	???export FLASK_APP=JTRL
 	export FLASK_DEBUG=1
+	export SECRET_KEY=
 	export EMAIL_ADDRESS=
 	export EMAIL_PASSWORD=
 	export EMAIL_SERVER=
-	export EMAIL_PORT =
+	export EMAIL_PORT=
 
 
 Run:
@@ -83,18 +82,9 @@ Tatoeba Corpus
 
 https://spacy.io/usage
 https://pypi.org/project/deep-translator/
-https://www.olivieraubert.net/vlc/python-ctypes/doc/index.html  for vlc
 https://www.tutorialspoint.com/flask/flask_application.htm
 https://tatoeba.org/en/downloads
 Rebuild virtual Environment
-
-
-
-
-replace with when moving to high accuracy:
-python -m spacy download en_core_web_trf
-python -m spacy download ja_core_news_trf
-
 
 
 pages

@@ -29,7 +29,7 @@ def addinglemma():
 def lemmaadded():
 	words = request.form.get('words')
 	lemmas, newgrammar = addlemmagrammar(words, current_user.currentlang, current_user.id)
-	grammar = pullusergram(current_user.currentlang, current_user.id)
+	grammar = data.pullusergrammar(current_user.currentlang, current_user.id)
 	grammarinfo = pullgrammartrans(current_user.currentlang)
 	return render_template("lemmaadded.html", lemmas=lemmas, newgrammar=newgrammar, grammar=grammar, grammarinfo=grammarinfo)
 
@@ -41,7 +41,7 @@ def closelemma():
 @learn.route("/grammar/")
 @login_required
 def grammar():
-	grammar = pullusergram(current_user.currentlang, current_user.id)
+	grammar = data.pullusergrammar(current_user.currentlang, current_user.id)
 	grammarinfo = pullgrammartrans(current_user.currentlang)
 	return render_template("grammar.html", grammar=grammar, grammarinfo=grammarinfo)
 

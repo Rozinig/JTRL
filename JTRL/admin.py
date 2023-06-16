@@ -12,11 +12,11 @@ admin = Blueprint('admin', __name__)
 @admin.route("/home")
 def home():
 	if (current_user.is_authenticated):
-		currentlangs = json.loads(current_user.settings)["tarlangs"]
+		currentlangs = current_user.targetlangs
 		langs ={}
 		for lang in currentlangs:
 			if lang != current_user.currentlang:
-				langs[lang]=config['LANGS'][lang]
+				langs[lang.code]=config['LANGS'][lang.code]
 		return render_template("userhome.html", langs=langs, lenlangs=len(langs))
 	else:
 		return render_template("otherhome.html")
@@ -62,20 +62,21 @@ def contacted():
 @admin.route("/settings/")
 @login_required
 def settings():
-	currentlangs = json.loads(current_user.settings)["tarlangs"]
+	currentlangs = current_user.targetlangs
 	alangs ={}
 	rlangs = {}
 	nlangs = {}
+	currentlangs = [lang.code for lang in currentlangs]
 	for lang in config['LANGS']:
 		if config['TARGET_LANG'][lang] and not lang in currentlangs:
 			alangs[lang]=config['LANGS'][lang]
 		if lang in currentlangs:
 			rlangs[lang]=config['LANGS'][lang]
-		if config['NATIVE_LANG'][lang] and not lang == current_user.nativelang:
+		if config['NATIVE_LANG'][lang] and not lang == current_user.nativelang_code:
 			nlangs[lang]=config['LANGS'][lang]
 
 	return render_template("settings.html", alangs=alangs, lenalangs=len(alangs), rlangs=rlangs, lenrlangs=len(rlangs),
-		streakgoal=current_user.streakgoal, nlangs=nlangs, lennlangs=len(nlangs), nativelang=config['LANGS'][current_user.nativelang])
+		streakgoal=current_user.streakgoal, nlangs=nlangs, lennlangs=len(nlangs), nativelang=config['LANGS'][current_user.nativelang_code])
 
 @admin.route("/settings/", methods=['POST'])
 @login_required
