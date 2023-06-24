@@ -1,0 +1,65 @@
+{
+
+	SQLALCHEMY_DATABASE_URI : sqlite:///auth.db
+
+	STREAM_LOG_LEVEL : DEBUG
+
+	FILE_LOG_LEVEL : DEBUG
+
+	# Which languages are available as the target language
+	TARGET_LANG : {"cat": false, "cmn": false, "hrv": false, "dan":false,
+	"nld": false, "eng": false, "fin": false, "fra": false,
+	"deu": true, "ell": false, "ita": false, "jpn": true, "kor": false,
+	"lit": false, "mkd":false, "nob": false, "pol": false, "por": false, 
+	"ron": false, "rus": false, "spa": true, "swe": false, "ukr": false},
+
+	# Which languages are available as the native language
+	NATIVE_LANG : {"cat": false, "cmn": false, "hrv": false, "dan":false,
+	"nld": false, "eng": true, "fin": false, "fra": false,
+	"deu": true, "ell": false, "ita": false, "jpn": false, "kor": false,
+	"lit": false, "mkd":false, "nob": false, "pol": false, "por": false, 
+	"ron": false, "rus": false, "spa": false, "swe": false, "ukr": false},
+
+	FORCE_REBUILD : true
+
+	SKIP_BUILD : true
+
+	#When building the database will quit after TESTING_CHUNK for each lang in each table
+	TESTING_CHUNK : 100
+
+	#Used to compare to total rows such that if more than this will only add rows that are New in the weekly release
+	TESTING_MAX : 10000
+
+	#Will commit to the database and print progress every TABLE_CHUNK rows so that interuption does not lose all progress
+	TABLE_CHUNK : 5000
+
+	# Which model from SPACY_MODELS will be used.
+	SPACY_MODEL: efficiency
+
+	# List of options for Spacy language models
+	SPACY_MODELS : 
+		{efficiency : {'cat':'ca_core_news_sm','cmn':'zh_core_web_sm','hrv':'hr_core_news_sm',
+			'dan':'da_core_news_sm','nld':'nl_core_news_sm','eng':'en_core_web_sm',
+			'fin':'fi_core_news_sm','fra':'fr_core_news_sm','deu':'de_core_news_sm',	
+			'ell':'el_core_news_sm','ita':'it_core_news_sm','jpn':'ja_core_news_sm',
+			'kor':'ko_core_news_sm','lit':'lt_core_news_sm','mkd':'mk_core_news_sm',
+			'nob':'nb_core_news_sm','pol':'pl_core_news_sm','por':'pt_core_news_sm',
+			'ron':'ro_core_news_sm','rus':'ru_core_news_sm','spa':'es_core_news_sm',
+			'swe':'sv_core_news_sm','ukr':'uk_core_news_sm'}
+
+		accuracy : {'cat':'ca_core_news_trf', 'cmn':'zh_core_web_trf', 'hrv':'hr_core_news_lg',
+			'dan':'da_core_news_trf', 'nld':'nl_core_news_lg', 'eng':'en_core_web_trf',
+			'fin':'fi_core_news_lg', 'fra':'fr_dep_news_trf', 'deu':'de_dep_news_trf',
+			'ell':'el_core_news_lg', 'ita':'it_core_news_lg', 'jpn':'ja_core_news_trf',
+			'kor':'ko_core_news_lg', 'lit':'lt_core_news_lg', 'mkd':'mk_core_news_lg',
+			'nob':'nb_core_news_lg', 'pol':'pl_core_news_lg', 'por':'pt_core_news_lg',
+			'ron':'ro_core_news_lg', 'rus':'ru_core_news_lg', 'spa':'es_dep_news_trf',
+			'swe':'sv_core_news_lg', 'ukr':'uk_core_news_trf'}}
+
+	TRANS_CODE : {'cat': 'ca', 'cmn': 'zh-CN', #traditional chinese 'cmn': 'zh-TW', 
+	'hrv': 'hr', 'dan': 'da', 'nld': 'nl', 'eng': 'en', 'fin': 'fi', 'fra': 'fr',
+	'deu': 'de', 'ell': 'el', 'ita': 'it', 'jpn': 'ja', 'kor': 'ko',
+	'lit': 'lt', 'mkd': 'mk', 'nob': 'no', 'pol': 'pl', 'por': 'pt', 
+	'ron': 'ro', 'rus': 'ru', 'spa': 'es', 'swe': 'sv', 'ukr': 'uk'}
+
+}

@@ -1,19 +1,20 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import LoginManager, login_required, current_user
+from deep_translator import GoogleTranslator as gt
 from . import db
-from .database import *
 import json, datetime, time
 
 config = current_app.config
 logger = current_app.logger
 
 learn = Blueprint('learn', __name__)
+from . import data
 
 @learn.route("/lemma/")
 @login_required
 def lemma():
-	if touchuserdb(current_user.currentlang, current_user.id, f"{current_user.currentlang}_known_lemma"):
-		lemmas = getalllemmainfo(current_user.currentlang, current_user.id)
+	lemmas = data.getknownlemma(current_user)
+	if len(lemmas):
 		return render_template("lemma.html", lemmas = lemmas)
 	flash("You don't have any known words.")
 	return redirect(url_for("learn.addinglemma"))
@@ -28,10 +29,10 @@ def addinglemma():
 @login_required
 def lemmaadded():
 	words = request.form.get('words')
-	lemmas, newgrammar = addlemmagrammar(words, current_user.currentlang, current_user.id)
-	grammar = pullusergram(current_user.currentlang, current_user.id)
-	grammarinfo = pullgrammartrans(current_user.currentlang)
-	return render_template("lemmaadded.html", lemmas=lemmas, newgrammar=newgrammar, grammar=grammar, grammarinfo=grammarinfo)
+	lemmas, newgrammar, notlemma = data.addlemmagrammar(words, current_user)
+	print(notlemma)
+	grammar = data.pullusergrammar(current_user)
+	return render_template("lemmaadded.html", lemmas=lemmas, newgrammar=newgrammar, grammar=grammar, notlemma=notlemma)
 
 @learn.route("/lemma/close/")
 @login_required
@@ -41,15 +42,14 @@ def closelemma():
 @learn.route("/grammar/")
 @login_required
 def grammar():
-	grammar = pullusergram(current_user.currentlang, current_user.id)
-	grammarinfo = pullgrammartrans(current_user.currentlang)
-	return render_template("grammar.html", grammar=grammar, grammarinfo=grammarinfo)
+	grammar = data.pullusergrammar(current_user)
+	return render_template("grammar.html", grammar=grammar)
 
 @learn.route("/grammar/", methods=["POST"])
 @login_required
 def grammarchange():
 	grammar = request.form.get('button')
-	grammar = json.loads(grammar.replace("'", '"'))
+	grammar = json.loads(grammar.replace("'", '"').replace('True','1').replace('False','0'))
 	for gtype in grammar:
 		for thing in grammar[gtype]:
 			for know in grammar[gtype][thing]:
@@ -57,7 +57,7 @@ def grammarchange():
 					grammar[gtype][thing][know] = True 
 				else: 
 					grammar[gtype][thing][know] = False
-	pushusergram(current_user.currentlang, current_user.id, grammar)
+	data.pushusergrammar(current_user, grammar)
 	flash("Grammar changes Saved.")
 	return redirect(url_for("admin.home"))
 
@@ -65,34 +65,36 @@ def grammarchange():
 @login_required
 def work():
 	t = time.time()
-	if not touchuserdb(current_user.currentlang, current_user.id, f"{current_user.currentlang}_available_sentences"):
-		flash("You don't have any sentences available. Try adding more words.")
+	text = data.nexttext(current_user)
+	if not text:
+		flash("You don't have any sentences available. Try adding more words or grammar.")
 		return redirect(url_for("learn.addinglemma"))
 
-	sentence = picksentence(current_user.currentlang,current_user.id)
-	info = additionalinfo(current_user.currentlang, sentence)
-	files = []
-
-	if (json.loads(sentence['audio']) != None):
-		for i, file in enumerate(json.loads(sentence['audio']), start=0):
+	info = data.additionalinfo(text)
+	files = data.getaudiofiles(text)
+	for i, file in enumerate(files, start=0):
 			files[i] = url_for('static', filename='/audio/' + file)
-
-	translation = getgoogle(sentence['text'], current_user.currentlang, current_user.nativelang)
-	if (sentence['trans'] != None):
-		trans = getlations(json.loads(sentence['trans']), current_user.nativelang)
-	if (current_user.streakdate == str(datetime.date.today())):
+	translations = []
+	for trans in text.translations:
+		translations.append(trans.text)
+	if not len(translations):
+		translations.append(gt(source=config['TRANS_CODE'][current_user.currentlang_code], 
+		target=config['TRANS_CODE'][current_user.nativelang_code]).translate(text.text))
+	if (current_user.streakdate == datetime.date.today()):
 		streakcount = False
 	else:
 		streakcount = True
 	logger.info(f"total sentence load time was {time.time()-t}")
-	return render_template("work.html", text = sentence['text'], audiofiles = files, translation=translation, senid=sentence['id'], info=info, streakcount=streakcount)
+	return render_template("work.html", text = text.text, audiofiles = files, 
+		translations=translations, senid=text.id, info=info, streakcount=streakcount)
 
 @learn.route('/work/', methods=["POST"])
 @login_required
 def workdone():
-	if (current_user.streakdate == str(datetime.date.today())):
+	if (current_user.streakdate == datetime.date.today()):
 		pass
-	elif (current_user.streakdate == str(datetime.date.today()-datetime.timedelta(days=1))):
+	elif (current_user.streakdate == datetime.date.today()-datetime.timedelta(days=1)):
+		print('streaking')
 		current_user.streaknum += 1
 		if (current_user.streaknum >= current_user.streakgoal):
 			current_user.streakdays += 1
@@ -100,19 +102,12 @@ def workdone():
 			current_user.streakdate = datetime.date.today()
 			flash("Congadulations you hit your goal for today!")
 	else:
+		print('reset')
 		current_user.streakdays = 0
 		current_user.streaknum = 1
 		current_user.streakdate = datetime.date.today()-datetime.timedelta(days=1)
 	current_user.totalsentences += 1
 	db.session.commit()
-	senid = request.form.get("next")
-	updatesentencelemma(senid, current_user.currentlang, current_user.id)
-	marksentence(senid, current_user.currentlang, current_user.id)
+	textid = request.form.get("next")
+	data.recordtext(current_user, textid)
 	return redirect(url_for("learn.work"))
-
-@learn.route('/updating/')
-@login_required
-def updatesentences():
-	processsentences(current_user.currentlang, current_user.id)
-	flash("Sentences Updated.")
-	return redirect(url_for("admin.home"))
