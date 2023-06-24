@@ -3,7 +3,7 @@
 {% block content %}
     <h1>{% block title %} Home {% endblock %}</h1>
     <h1>Welcome back!</h1>
-    <h2> Your current language is {{config['LANGS'][current_user.currentlang]}} </h2>
+    <h2> Your current language is {{config['LANGS'][current_user.currentlang_code]}} </h2>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="notification is-danger">
@@ -21,10 +21,6 @@
             </p>
             <p>
                 <button onclick="window.location.href='{{ url_for('learn.grammar') }}';">Add Grammar</button>
-            </p>
-            <p>
-                <button onclick="window.location.href='{{ url_for('learn.updatesentences') }}';">Update Available Sentences</button>
-                Takes about a minute, only run after finished adding words and grammar
             </p>
             {% if lenlangs > 0 %}
         <form action="" method="POST">

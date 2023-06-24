@@ -31,7 +31,9 @@
         {% if info %}
         <h3>{{info}}</h3>
         {% endif %}
-      <h3>{{translation}}</h3>
+        {% for trans in translations %}
+      <h3>{{trans}}</h3>
+      {% endfor %}
     </div> 
     <div id="translation space">
       <h3>|</h3>

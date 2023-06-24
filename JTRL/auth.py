@@ -9,6 +9,7 @@ config = current_app.config
 logger = current_app.logger
 
 auth = Blueprint('auth', __name__)
+from . import data
 
 poslangs = config['LANGS']
 
@@ -48,6 +49,7 @@ def signup_post():
 	# add the new user to the database
 	db.session.add(new_user)
 	db.session.commit()
+	data.pushusergrammar(current_user, data.pullusergrammar(current_user))
 	flash("Account creation successful!")
 	return redirect(url_for('auth.login'))
 

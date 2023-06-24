@@ -1,12 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import LoginManager, login_user, current_user, login_required
 from . import db, mail
+from .models import Lang
 import json
 
 config = current_app.config
 logger = current_app.logger
 
 admin = Blueprint('admin', __name__)
+from . import data
 
 @admin.route("/")
 @admin.route("/home")
@@ -28,7 +30,7 @@ def homeupdate():
 		button = request.form.get('button')
 		if (button == "switch"):
 			lang = request.form.get('lang')
-			current_user.currentlang = lang
+			current_user.currentlang_code = lang
 			db.session.commit()		
 	return redirect(url_for("admin.home"))
 
@@ -84,24 +86,23 @@ def updatesettings():
 	button = request.form.get('button')
 	if (button == "addlang"):
 		lang = request.form.get('lang')
-		currentsettings = json.loads(current_user.settings)
-		currentsettings['tarlangs'].append(lang)
-		current_user.settings=json.dumps(currentsettings)
+		lang = Lang.query.filter(Lang.code == lang).first()
+		current_user.targetlangs.append(lang)
 		current_user.currentlang = lang
 		db.session.commit()
-		flash(f"{config['LANGS'][lang]} added.")
+		data.pushusergrammar(current_user, data.pullusergrammar(current_user))
+		flash(f"{config['LANGS'][lang.code]} added.")
 		return redirect(url_for("admin.home"))
 	if (button == "removelang"):
 		lang = request.form.get('lang')
-		currentsettings = json.loads(current_user.settings)
-		if len(currentsettings['tarlangs']) == 1:
+		lang = Lang.query.filter(Lang.code == lang).first()
+		if len(current_user.targetlangs) == 1:
 			flash("You can't remove your only language.")
 			return redirect(url_for("admin.home"))
-		currentsettings['tarlangs'].remove(lang)
-		current_user.settings=json.dumps(currentsettings)
-		current_user.currentlang = currentsettings['tarlangs'][0]
+		current_user.targetlangs.remove(lang)
+		current_user.currentlang = current_user.targetlangs[0]
 		db.session.commit()
-		flash(f"{config['LANGS'][lang]} removed.")
+		flash(f"{config['LANGS'][lang.code]} removed.")
 		return redirect(url_for("admin.home"))
 	if (button == "goal"):
 		goal = request.form.get('goal')
@@ -111,9 +112,9 @@ def updatesettings():
 		return redirect(url_for("admin.home"))
 	if (button == "nativelang"):
 		lang = request.form.get('lang')
-		current_user.nativelang = lang
+		current_user.nativelang_code = lang
 		db.session.commit()
-		flash(f"Your native language has been changed to {config['LANGS'][current_user.nativelang]}.")
+		flash(f"Your native language has been changed to {config['LANGS'][current_user.nativelang_code]}.")
 		return redirect(url_for("admin.home"))
 
 	flash("There was an error updating settings.")

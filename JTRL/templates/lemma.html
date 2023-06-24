@@ -14,9 +14,9 @@
         <li class="lemma">Times Used</li>
         <li class="lemma">Last Used Date</li>
         {% for info in lemmas %}
-        <li class="lemma"> {{info['lemma']}}</li>
-        <li class="lemma"> {{info['count']}}</li>
-        <li class="lemma"> {{info['date']}}</li>
+        <li class="lemma"> {{info.lemma.lemma}}</li>
+        <li class="lemma"> {{info.count}}</li>
+        <li class="lemma"> {{info.date}}</li>
         {% endfor %}
     </ul>
 {% endblock %}

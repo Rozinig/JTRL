@@ -1,8 +1,9 @@
 from flask import Blueprint, current_app
 from . import db, parser
 from tatoebatools import tatoeba
-from .models import User, Lang, Text, Audio, Lemma, Grammar, Token, Event
-import time, json
+from .models import User, Lang, Text, Audio, Lemma, Grammar, Token, Event, Knowngrammar, Knownlemma, Textrecord
+import time, json, jaconv, os, wget
+from sqlalchemy import select
 
 config = current_app.config
 logger = current_app.logger
@@ -68,10 +69,10 @@ def addlangs():
 		if test:
 			if not test.native == config['NATIVE_LANG'][lang]:
 				test.native = config['NATIVE_LANG'][lang]
-				new.targets.append(lang)
+				new['targets'].add(lang)
 			if  not test.target == config['TARGET_LANG'][lang]:
 				test.target = config['TARGET_LANG'][lang]
-				new.natives.append(lang)
+				new['natives'].add(lang)
 		else:
 			db.session.add(Lang(code=lang, native=config['NATIVE_LANG'][lang], target=config['TARGET_LANG'][lang]))
 			if lang in config['NATIVE_SET']:
@@ -114,12 +115,12 @@ def addaudio(lang, scope="all"):
 	i = 0
 	for a in tatoeba.sentences_with_audio(lang, scope=scope):
 		if a.license:
-			test = Audio.query.filter(Audio.id == -1*a.audio_id).first()
+			test = Audio.query.filter(Audio.id == a.audio_id).first()
 			if test:
 				if test.text_id != -1*a.sentence_id:
 					test.text_id = -1*a.sentence_id
 			else:
-				db.session.add(Audio(id=-1*a.audio_id, text_id=-1*a.sentence_id, license=a.license, username=a.username))
+				db.session.add(Audio(id=a.audio_id, text_id=-1*a.sentence_id, license=a.license, username=a.username))
 		i += 1
 		if i%config['TABLE_CHUNK'] == 0:
 			db.session.commit()
@@ -182,14 +183,15 @@ def parsetext(lang, scope='all'):
 				if not sqlgrammar:
 					sqlgrammar = Grammar(lang_code=lang, grammar=bit[sub], grammartype=sub)
 					db.session.add(sqlgrammar)
-				if sub =='pos':
+				newtoken.grammar.append(sqlgrammar)	
+				'''if sub =='pos':
 					newtoken.pos = sqlgrammar
 				elif sub =='ent':
 					newtoken.ent = sqlgrammar
 				elif sub =='tag':
 					newtoken.tag = sqlgrammar
 				else:
-					newtoken.morphs.append(sqlgrammar)
+					newtoken.morphs.append(sqlgrammar)'''
 
 			db.session.add(newtoken)
 		row.json = json.dumps(tokens, ensure_ascii=False).encode('utf8')
@@ -204,21 +206,148 @@ def parsetext(lang, scope='all'):
 	logger.info(f"It took {(time.time()-starttime)/60} minutes to add {lang} parsing to json in text table")
 	db.session.commit()
 
-def pullusergrammar(lang, user):
-	db = f'{lang}_tag'
-	if (not touchuserdb(lang, user, db)):
-		createusergrammar(lang, user)
-	pur, pon = userdatabase(user)
+def pullusergrammar(user):
 	grammar = {}
-	subs = ['tag', 'ent_type', 'POS']
-	for row in pur.execute(f"SELECT morph FROM {lang}_morphs").fetchall():
-		subs.append(sqlsafe(row['morph']))
+	allgram = Grammar.query.filter(Grammar.lang_code == user.currentlang_code).all()
+	for gram in Knowngrammar.query.filter(Knowngrammar.user_id == user.id).all():
+		if gram.grammar.lang_code != user.currentlang_code:
+			continue
+		if not gram.grammar.grammartype in grammar:
+			grammar[gram.grammar.grammartype] = {}
+		grammar[gram.grammar.grammartype][gram.grammar.grammar] = {'unknown':gram.unknown, 'known':gram.known, 'focus':gram.focus}
+		allgram.remove(gram.grammar)
+	for gram in  allgram:
+		if not gram.grammartype in grammar:
+			grammar[gram.grammartype] = {}
+		grammar[gram.grammartype][gram.grammar] = {'unknown': 0, 'known':1, 'focus':0}
+		if gram.grammartype == 'pos' and (gram.grammar == 'NUM' or gram.grammar == 'PUNCT'):
+			grammar[gram.grammartype][gram.grammar]['unknown'] = 1
 
-	for sub in subs:
-		grammar[sub] = {}
-		for each in pur.execute(f"SELECT {sub}, unknown, known, focus FROM {lang}_{sub}").fetchall():
-			grammar[sub][each[sub]] = {'unknown':each['unknown'], 'known':each['known'], 'focus':each['focus']}
-
-	pon.commit()
-	pon.close()
 	return grammar
+
+def pushusergrammar(user, grammar):
+	allgram = Grammar.query.filter(Grammar.lang_code == user.currentlang_code).all()
+	for gram in Knowngrammar.query.filter(Knowngrammar.user_id == user.id).all():
+		if gram.grammar.lang_code != user.currentlang_code:
+			continue
+		if not gram.grammar.grammartype in grammar:
+			allgram.remove(gram.grammar)
+			continue
+		if not gram.grammar.grammar in grammar[gram.grammar.grammartype]:
+			allgram.remove(gram.grammar)
+			continue
+		gram.unknown = grammar[gram.grammar.grammartype][gram.grammar.grammar]['unknown']
+		gram.known = grammar[gram.grammar.grammartype][gram.grammar.grammar]['known']
+		gram.focus = grammar[gram.grammar.grammartype][gram.grammar.grammar]['focus']
+		allgram.remove(gram.grammar)
+	for gram in allgram:
+		newknown = Knowngrammar(user_id = user.id, grammar_id=gram.id, unknown=grammar[gram.grammartype][gram.grammar]['unknown'],
+			known =grammar[gram.grammartype][gram.grammar]['known'], focus=grammar[gram.grammartype][gram.grammar]['focus'])
+		db.session.add(newknown)
+	db.session.commit()
+
+def addlemmagrammar(words, user):
+	parsed = parser.parse(words, user.currentlang_code)
+	grammar = {'tag':{}, 'pos':{}, 'ent':{}}
+	lemmas = set()
+	usergrammar = pullusergrammar(user)
+	for token in parsed:
+		lemma = token.lemma_.lower().strip()
+		lemmas.add(lemma)
+
+		tokendict = token.morph.to_dict()
+		for morph in tokendict:
+			if (morph != 'Reading'):
+				if (not morph in grammar):
+					grammar[morph] = {}
+				if (not tokendict[morph] in grammar[morph] and tokendict[morph] in usergrammar[morph]):
+					grammar[morph][tokendict[morph]] = {'unknown': usergrammar[morph][tokendict[morph]]['unknown'], 'known': 1, 'focus': usergrammar[morph][tokendict[morph]]['focus']}
+		if (not token.tag_ in grammar['tag'] and token.tag_ in usergrammar['tag']):
+			grammar['tag'][token.tag_] = {'unknown': usergrammar['tag'][token.tag_]['unknown'], 'known': 1, 'focus': usergrammar['tag'][token.tag_]['focus']}
+		if (not token.pos_ in grammar['pos'])and token.pos_ in usergrammar['pos']:
+			grammar['pos'][token.pos_] = {'unknown': usergrammar['pos'][token.pos_]['unknown'], 'known': 1, 'focus': usergrammar['pos'][token.pos_]['focus']}
+		if (not token.ent_type_ in grammar['ent'] and token.ent_type_ in usergrammar['ent']):
+			grammar['ent'][token.ent_type_] = {'unknown': usergrammar['ent'][token.ent_type_]['unknown'], 'known': 1, 'focus': usergrammar['ent'][token.ent_type_]['focus']}
+
+	#TODO need to filter non lemma and knownlemma using sql
+	lemmas2 = set()
+	test = Lemma.query.filter(Lemma.lang_code == user.currentlang_code).all()
+	for lemma in test:
+		if (lemma.lemma in lemmas):
+			lemmas2.add(lemma)
+			lemmas.remove(lemma.lemma)
+
+	
+	test = Knownlemma.query.filter(Knownlemma.user_id == user.id).all()
+	for known in test:
+		if (known.lemma in lemmas2):
+			lemmas2.remove(known.lemma)
+
+	for lemma in lemmas2:
+		newknown = Knownlemma(user_id = user.id, lemma=lemma)
+		db.session.add(newknown)
+	db.session.commit()
+	return lemmas2, grammar, lemmas
+
+def getknownlemma(user):
+	return db.session.query(Knownlemma).join(Lemma).filter(Knownlemma.user == user, Lemma.lang == user.currentlang).all()
+
+def additionalinfo(text): 
+	info = None
+	if (text.lang_code == 'jpn'):
+		tokens = json.loads(text.json)
+		reading = ""
+		for token in tokens:
+			if ('Reading' in token and token['text'] != '？'):
+				reading += '  ' + token['Reading']
+			if token['text'] == '？':
+				reading += '?'
+		info = jaconv.kata2hira(reading)
+	return info
+
+def getaudiofiles(text):
+	files = [] #TODO pass username and license and add computer generated sound files 
+	for audioid in text.audios:
+		filename = str(-1*text.id) + '-' + str(audioid.id) + '.mp3'
+		filepath = './JTRL/static/audio/' + filename
+		if (not os.path.isfile(filepath)):
+			wget.download(f"https://tatoeba.org/audio/download/{audioid.id}", './JTRL/static/audio/')
+			logger.info(f'Audio file for {audioid.id} Downloaded')
+		else:
+			logger.info(f'Audio file for {filename} already downloaded')
+		files.append(filename)
+	return files
+
+def nexttext(user):
+	subquery = (
+		db.session
+		.query(Token.id)
+		.join(Lemma, Token.lemma)
+		.join(Knownlemma)
+		.filter(Knownlemma.user == user)
+		
+	)
+
+	query = (
+		db.session
+		.query(Text)
+		.outerjoin(Textrecord).order_by(Textrecord.date.asc())
+		.filter(~Text.tokens.any(Token.id.notin_(subquery)), Text.lang == user.currentlang)
+	)
+	text = query.first()
+	return text
+
+def recordtext(user, textid):
+	knowns  = Knowngrammar.query.filter(Knowngrammar.user == user).join(Grammar).join(Token, Grammar.tokens).join(Text).filter(Text.id == textid).all()
+	for known in knowns:
+		known.count += 1
+	lemmas = Knownlemma.query.filter(Knownlemma.user == user).join(Lemma).join(Token, Lemma.tokens).join(Text).filter(Text.id == textid).all()
+	for lemma in lemmas:
+		lemma.count += 1
+	record = Textrecord.query.filter(Textrecord.text_id == textid, Textrecord.user == user).first()
+	if record == None:
+		db.session.add(Textrecord(user=user, text_id=textid, count=1))
+	else:
+		record.count += 1
+
+	db.session.commit()

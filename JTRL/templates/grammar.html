@@ -1,43 +1,11 @@
 {% extends 'base.html' %}
+{% from 'macros.html' import displaygrammar %}
 
 {% block content %}
     <h1>{% block title %} Grammar {% endblock %}</h1>
     <h2> {{config['LANGS'][current_user.currentlang]}} </h2>
     <h2>Select the grammar for known sentences</h2>
-<form method="POST" action="/grammar">
-    <button class="button" name="button" value="{{grammar}}">Save Grammar</button>
-{% for type in grammar %}
-        <table id={{type}}>
-            <tr class="header">
-                <th style="width:30%;">{{type}}</th>
-                <th style="width:30%;">{{config["LANGS"][current_user.nativelang]}}</th>
-                <th style="width:10%;">Count</th>
-                <th style="width:20%;">Even if unknown <input type="checkbox" id="{{type}}_unknown" onClick="checkfunction(this, '{{type}}', 'unknown')"></th>
-                <th style="width:10%;">Known <input type="checkbox" id="{{type}}_known" onClick="checkfunction(this, '{{type}}', 'known')"></th>
-                <th style="width:10%;">Focus <input type="checkbox" id="{{type}}_focus" onClick="checkfunction(this, '{{type}}', 'focus')"></th>
-            </tr>
-            {% for thing in grammar[type] %}
-            <tr>
-                <td>{{thing}}</td>
-                <td>{{grammarinfo[type][thing]['translation'][current_user.nativelang]}}</td>
-                <td>{{grammarinfo[type][thing]['count']}}</td>
-                <td><input type="checkbox" name="{{type}}_{{thing}}_unknown" class="{{type}}_unknown" {% if grammar[type][thing]["unknown"] %} checked {% endif %}></td>
-                <td><input type="checkbox" name="{{type}}_{{thing}}_known" class="{{type}}_known" {% if grammar[type][thing]["known"] %} checked {% endif %}></td>
-                <td><input type="checkbox" name="{{type}}_{{thing}}_focus" class="{{type}}_focus" {% if grammar[type][thing]["focus"] %} checked {% endif %}></td>
-            </tr>
-            {% endfor %}
-        </table>
-        <br>
-    {% endfor %}
-    <button class="button" name="button" value="{{grammar}}">Save Grammar</button>
-</form>
 
-    <script>
-        function checkfunction(source, type, known) {
-            var checkboxes = document.getElementsByClassName(type +"_" + known);
-          for (var i in checkboxes){
-            checkboxes[i].checked = source.checked;
-          }
-        } 
-    </script>
+    {{ displaygrammar(grammar)}}
+    
 {% endblock %}

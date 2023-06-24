@@ -23,7 +23,7 @@ class User(UserMixin, db.Model):
     created_on =db.Column(db.DateTime(), default=datetime.utcnow)
     updated_on = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     streakdays = db.Column(db.Integer(), default=0)
-    streakdate = db.Column(db.DateTime(), default=datetime(1991,1,1))
+    streakdate = db.Column(db.Date(), default=datetime(1991,1,1))
     totalsentences = db.Column(db.Integer(), default=0)
     streakgoal = db.Column(db.Integer(), default=10)
     streaknum = db.Column(db.Integer(), default=0)
@@ -48,7 +48,7 @@ class Lang(db.Model):
     grammar = db.relationship('Grammar', backref = 'lang')
     events = db.relationship('Event', backref='lang')
     def __repr__(self):
-        return "<Lang:{}:{}>".format(self.id, self.code)
+        return "<Lang:{}>".format(self.code)
 
 
 links = db.Table('links',
@@ -89,7 +89,11 @@ class Audio(db.Model):
     text_id = db.Column(db.Integer(), primary_key=True)
     tag_name = db.Column(db.String(100))'''
 
-token_morphs = db.Table('token_morphs',
+'''token_morphs = db.Table('token_morphs',
+    db.Column('token_id', db.Integer, db.ForeignKey('tokens.id')),
+    db.Column('grammar_id', db.Integer, db.ForeignKey('grammar.id'))
+    )'''
+token_grammar = db.Table('token_grammar',
     db.Column('token_id', db.Integer, db.ForeignKey('tokens.id')),
     db.Column('grammar_id', db.Integer, db.ForeignKey('grammar.id'))
     )
@@ -100,9 +104,9 @@ class Token(db.Model):
     text_id = db.Column(db.Integer, db.ForeignKey('texts.id'))
     position = db.Column(db.Integer())
     lemma_id = db.Column(db.Integer, db.ForeignKey('lemmas.id')) #TODO many to many or one to one
-    pos_id = db.Column(db.Integer, db.ForeignKey('grammar.id'))
-    tag_id = db.Column(db.Integer, db.ForeignKey('grammar.id'))
-    ent_id = db.Column(db.Integer, db.ForeignKey('grammar.id'))
+    #pos_id = db.Column(db.Integer, db.ForeignKey('grammar.id'))
+    #tag_id = db.Column(db.Integer, db.ForeignKey('grammar.id'))
+    #ent_id = db.Column(db.Integer, db.ForeignKey('grammar.id'))
     def __repr__(self):
         return "<Token:{}:{}>".format(self.id, self.position)
 
@@ -124,10 +128,11 @@ class Grammar(db.Model):
     grammartype = db.Column(db.String(255))
     grammar = db.Column(db.String(255))
     #count = db.Column(db.Integer(), default=1)
-    token_pos = db.relationship('Token', backref = 'pos', foreign_keys=[Token.pos_id])
-    token_tag = db.relationship('Token', backref='tag', foreign_keys=[Token.tag_id])
-    token_ent = db.relationship('Token', backref='ent', foreign_keys=[Token.ent_id])
-    token_morphs = db.relationship('Token', secondary=token_morphs, backref='morphs')
+    #token_pos = db.relationship('Token', backref = 'pos', foreign_keys=[Token.pos_id])
+    #token_tag = db.relationship('Token', backref='tag', foreign_keys=[Token.tag_id])
+    #token_ent = db.relationship('Token', backref='ent', foreign_keys=[Token.ent_id])
+    #token_morphs = db.relationship('Token', secondary=token_morphs, backref='morphs')
+    tokens = db.relationship('Token', secondary=token_grammar, backref='grammar')
     known = db.relationship('Knowngrammar', backref='grammar')
     def __repr__(self):
         return "<Grammar:{}:{}:{}>".format(self.id, self.grammartype, self.grammar)
@@ -135,8 +140,8 @@ class Grammar(db.Model):
 class Knownlemma(db.Model):
     __tablename__ = 'knownlemma'
     id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), primary_key=True)
-    lemma_id = db.Column(db.Integer(), db.ForeignKey('lemmas.id'), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    lemma_id = db.Column(db.Integer(), db.ForeignKey('lemmas.id'))
     count = db.Column(db.Integer(), default=0) #TODO this could be done to events when sentencs are done
     date = db.Column(db.DateTime(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
     def __repr__(self):
@@ -144,15 +149,15 @@ class Knownlemma(db.Model):
 
 class Textrecord(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), primary_key=True)
-    text_id = db.Column(db.Integer(), db.ForeignKey('texts.id'), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    text_id = db.Column(db.Integer(), db.ForeignKey('texts.id'))
     count = db.Column(db.Integer(), default=0) #TODO this could be done to events when sentencs are done
-    date = db.Column(db.DateTime(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
+    date = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
 
 class Knowngrammar(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), primary_key=True)
-    grammar_id = db.Column(db.Integer(), db.ForeignKey('grammar.id'), primary_key=True)
+    id = db.Column(db.Integer(), primary_key=True, )
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    grammar_id = db.Column(db.Integer(), db.ForeignKey('grammar.id'))
     count = db.Column(db.Integer(), default=0) #TODO this could be done to events when sentencs are done
     date = db.Column(db.DateTime(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
     unknown = db.Column(db.Boolean())

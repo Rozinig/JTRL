@@ -4,7 +4,6 @@ from flask_login import LoginManager
 from markupsafe import escape
 #from multiprocessing import Pool
 import time, hjson, os, logging
-#from .database import *
 
 dirs = ['./JTRL/static/audio/', './logs/']
 for pathway in dirs:
