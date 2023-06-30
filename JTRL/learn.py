@@ -76,7 +76,8 @@ def work():
 			files[i] = url_for('static', filename='/audio/' + file)
 	translations = []
 	for trans in text.translations:
-		translations.append(trans.text)
+		if trans.lang == current_user.currentlang:
+			translations.append(trans.text)
 	if not len(translations):
 		translations.append(gt(source=config['TRANS_CODE'][current_user.currentlang_code], 
 		target=config['TRANS_CODE'][current_user.nativelang_code]).translate(text.text))
@@ -94,7 +95,6 @@ def workdone():
 	if (current_user.streakdate == datetime.date.today()):
 		pass
 	elif (current_user.streakdate == datetime.date.today()-datetime.timedelta(days=1)):
-		print('streaking')
 		current_user.streaknum += 1
 		if (current_user.streaknum >= current_user.streakgoal):
 			current_user.streakdays += 1
@@ -102,7 +102,6 @@ def workdone():
 			current_user.streakdate = datetime.date.today()
 			flash("Congadulations you hit your goal for today!")
 	else:
-		print('reset')
 		current_user.streakdays = 0
 		current_user.streaknum = 1
 		current_user.streakdate = datetime.date.today()-datetime.timedelta(days=1)

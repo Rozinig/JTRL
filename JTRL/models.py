@@ -143,7 +143,7 @@ class Knownlemma(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
     lemma_id = db.Column(db.Integer(), db.ForeignKey('lemmas.id'))
     count = db.Column(db.Integer(), default=0) #TODO this could be done to events when sentencs are done
-    date = db.Column(db.DateTime(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
+    date = db.Column(db.Date(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
     def __repr__(self):
         return "<Known Lemma:{}:{}:{}>".format(self.user_id, self.lemma_id, self.count)
 
@@ -159,7 +159,7 @@ class Knowngrammar(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
     grammar_id = db.Column(db.Integer(), db.ForeignKey('grammar.id'))
     count = db.Column(db.Integer(), default=0) #TODO this could be done to events when sentencs are done
-    date = db.Column(db.DateTime(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
+    date = db.Column(db.Date(), default=datetime(1991,1,1), onupdate=datetime.utcnow) #TODO this could be done to events when sentencs are done
     unknown = db.Column(db.Boolean())
     known = db.Column(db.Boolean())
     focus = db.Column(db.Boolean())

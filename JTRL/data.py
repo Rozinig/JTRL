@@ -1,9 +1,10 @@
 from flask import Blueprint, current_app
 from . import db, parser
 from tatoebatools import tatoeba
+from datetime import datetime, timedelta
 from .models import User, Lang, Text, Audio, Lemma, Grammar, Token, Event, Knowngrammar, Knownlemma, Textrecord
 import time, json, jaconv, os, wget
-from sqlalchemy import select
+from sqlalchemy import select, or_, and_, exists
 
 config = current_app.config
 logger = current_app.logger
@@ -319,22 +320,43 @@ def getaudiofiles(text):
 	return files
 
 def nexttext(user):
+	#TODO Need to add grammar to this
+	x = 3
+	days = datetime.now() - timedelta(days=x)
+	print(days)
+	lemmaquery = (
+		db.session.query(Knownlemma.id)
+		.filter(Knowngrammar.user == user, Knownlemma.date < days).exists()
+		)
+	grammarquery = (
+		db.session.query(Grammar.id)
+		.join(Knowngrammar)
+		.filter(Knowngrammar.user == user, Knowngrammar.known)
+		)
+
 	subquery = (
 		db.session
 		.query(Token.id)
 		.join(Lemma, Token.lemma)
-		.join(Knownlemma)
-		.filter(Knownlemma.user == user)
-		
-	)
+		.outerjoin(Knownlemma)
+		.join(Grammar, Token.grammar)
+		.outerjoin(Knowngrammar)
+		.filter(or_(and_(Knownlemma.user == user, ~Token.grammar.any(Grammar.id.notin_(grammarquery))), Knowngrammar.unknown))	
+		.distinct(Token.id)
+		)
 
 	query = (
 		db.session
 		.query(Text)
-		.outerjoin(Textrecord).order_by(Textrecord.date.asc())
+		.join(Token).join(Lemma).outerjoin(Knownlemma)
+		.outerjoin(Textrecord).order_by(Textrecord.date.asc(), db.case([(lemmaquery, Knownlemma.date)], else_=datetime.max))
 		.filter(~Text.tokens.any(Token.id.notin_(subquery)), Text.lang == user.currentlang)
-	)
+		)
 	text = query.first()
+	test = query.all()
+	print(len(test))
+	print(test)
+
 	return text
 
 def recordtext(user, textid):
