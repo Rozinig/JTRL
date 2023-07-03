@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from .models import User, Lang, Text, Audio, Lemma, Grammar, Token, Event, Knowngrammar, Knownlemma, Textrecord
 import time, json, jaconv, os, wget
 from sqlalchemy import select, or_, and_, exists
+from TTS.api import TTS
 
 config = current_app.config
 logger = current_app.logger
@@ -316,7 +317,13 @@ def getaudiofiles(text):
 			logger.info(f'Audio file for {audioid.id} Downloaded')
 		else:
 			logger.info(f'Audio file for {filename} already downloaded')
-		files.append(filename)
+		files.append({'file':filename, 'info':f"Audio from Tatoeba user {audioid.username} under license {audioid.license}."})
+	fileprefix =f'./JTRL/static/audio/{str(text.id)}'
+	if (not os.path.isfile(fileprefix+'-v1.wav')):
+		speaker = 'John'
+		#tts=TTS(TTS.list_models[0])
+		files.append({'file':filename, 'info':f"TTS audio speaker {speaker}."})
+		
 	return files
 
 def nexttext(user):
@@ -326,7 +333,8 @@ def nexttext(user):
 	print(days)
 	lemmaquery = (
 		db.session.query(Knownlemma.id)
-		.filter(Knowngrammar.user == user, Knownlemma.date < days).exists()
+		.filter(Knowngrammar.user == user, Knownlemma.date < days)
+		.exists()
 		)
 	grammarquery = (
 		db.session.query(Grammar.id)
@@ -353,9 +361,6 @@ def nexttext(user):
 		.filter(~Text.tokens.any(Token.id.notin_(subquery)), Text.lang == user.currentlang)
 		)
 	text = query.first()
-	test = query.all()
-	print(len(test))
-	print(test)
 
 	return text
 

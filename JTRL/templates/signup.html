@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="column is-4 is-offset-4">
-    <h3 class="title">Sign Up</h3>
+    <h3 class="title">{% block title %} Sign Up {% endblock %}</h3>
     <div class="container">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -38,6 +38,7 @@
                 <option value="{{lang}}">{{langs[lang]}}</option>
                 {% endfor %}
             </select>
+            <div class="h-captcha" data-sitekey="{{config['CAPTCHA_SITEKEY']}}"></div>
 
             <button>Sign Up</button>
 

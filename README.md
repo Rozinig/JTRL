@@ -19,6 +19,7 @@ Setup:
 	pip install Flask flask-login flask_sqlalchemy
 	pip install jaconv
 	pip install psycopg2-binary
+	pip install TTS
 
 	export FLASK_APP=.  
 	???export FLASK_APP=JTRL
@@ -28,6 +29,8 @@ Setup:
 	export EMAIL_PASSWORD=
 	export EMAIL_SERVER=
 	export EMAIL_PORT=
+	export CAPTCHA_SECRET=
+	export COQUI_STUDIO_TOKEN=
 
 
 Run:
@@ -84,6 +87,8 @@ https://spacy.io/usage
 https://pypi.org/project/deep-translator/
 https://www.tutorialspoint.com/flask/flask_application.htm
 https://tatoeba.org/en/downloads
+https://coqui.ai/
+https://www.hcaptcha.com/
 Rebuild virtual Environment
 
 

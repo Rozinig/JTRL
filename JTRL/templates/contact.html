@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+b{% extends 'base.html' %}
 
 {% block content %}
     <h1>{% block title %} Contact Us {% endblock %}</h1>
@@ -20,7 +20,9 @@
 
             <label for="subject">Message</label>
             <textarea id="message" name="message" placeholder="Write something.." style="height:400px"></textarea>
-
+            {% if not current_user.is_authenticated %}
+            <div class="h-captcha" data-sitekey="{{config['CAPTCHA_SITEKEY']}}"></div>
+            {% endif %}
             <input class="button" type="submit" value="Submit">
 
         </form>

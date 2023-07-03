@@ -75,3 +75,45 @@ li[class="lemma"] {
   left: -35px;
   content: "✖";
 }
+
+@font-face {
+  font-family: "Hiragino Kaku Gothic Pro W3";
+  src: url("_hirakakyprow3.otf");
+}
+@font-face{font-family:random_0;  src:url('fonts/_NotoSansJP-Medium.otf');}
+@font-face{font-family:random_1;  src:url('fonts/_newa.ttf');}
+@font-face{font-family:random_2;  src:url('fonts/_newb.ttf');}
+@font-face{font-family:random_3;  src:url('fonts/_newc.ttf');}
+@font-face{font-family:random_4;  src:url('fonts/_newd.ttf');}
+@font-face{font-family:random_5;  src:url('fonts/_newe.ttf');}
+@font-face{font-family:random_6;  src:url('fonts/_newf.ttf');}
+@font-face{font-family:random_7;  src:url('fonts/_newg.ttf');}
+@font-face{font-family:random_8;  src:url('fonts/_newh.ttf');}
+@font-face{font-family:random_9;  src:url('fonts/_newi.ttf');}
+@font-face{font-family:random_10; src:url('fonts/_newj.ttf');}
+@font-face{font-family:random_11; src:url('fonts/_ackaisyo.ttf');}
+@font-face{font-family:random_12; src:url('fonts/_textbook_a.ttf');}
+@font-face{font-family:random_13; src:url('fonts/_textbook_b.ttf');}
+@font-face{font-family:random_14; src:url('fonts/_textbook_c.ttf');}
+@font-face{font-family:random_15; src:url('fonts/_font_1_ant-kaku.ttf');}
+@font-face{font-family:random_16; src:url('fonts/_font_1_ant-maru.ttf');}
+@font-face{font-family:random_17; src:url('fonts/_harenosora.otf');}
+@font-face{font-family:random_18; src:url('fonts/_jkg_l_2.ttf'); }
+@font-face{font-family:random_19; src:url('fonts/_ranobepop.otf'); }
+@font-face{font-family:random_20; src:url('fonts/_snsanafonyu.ttf'); }
+@font-face{font-family:random_21; src:url('fonts/_01FLOPDESIGN.ttf');}
+@font-face{font-family:random_22; src:url('fonts/_02UtsukushiMincho.ttf');}
+@font-face{font-family:random_23; src:url('fonts/_AhahaMojimoji.ttf');}
+@font-face{font-family:random_24; src:url('fonts/_AozoraMinchoRegular.ttf');}
+@font-face{font-family:random_25; src:url('fonts/_chogokubosogothic_5.ttf');}
+@font-face{font-family:random_26; src:url('fonts/_font_1_kokumr.ttf');}
+@font-face{font-family:random_27; src:url('fonts/_HanaMinA.ttf');}
+@font-face{font-family:random_27; src:url('fonts/_hc-too5.ttf');}
+@font-face{font-family:random_28; src:url('fonts/_ipaexm.ttf');}
+@font-face{font-family:random_29; src:url('fonts/_JiyunoTsubasa.ttf');}
+@font-face{font-family:random_30; src:url('fonts/_KTEGAKI.ttf');}
+@font-face{font-family:random_31; src:url('fonts/_migu-1c-regular.ttf');}
+@font-face{font-family:random_32; src:url('fonts/_mikachan.ttf');}
+@font-face{font-family:random_33; src:url('fonts/_rounded-mplus-1p-medium.ttf');}
+@font-face{font-family:random_34; src:url('fonts/_sp-setofont.ttf');}
+@font-face{font-family:random_35; src:url('fonts/_togoshi-mincho.ttf');}

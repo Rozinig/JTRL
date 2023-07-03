@@ -10,41 +10,27 @@
             </div>
         {% endif %}
         {% endwith %}
-    <h2> Change Password</h2>
-        <form method="POST" action="/change">
-            <label for="ogpassword">Current Password</label>
-            <div class="field">
-                <div class="control">
-                    <input class="input is-large" type="password" name="ogpassword" placeholder="Current Password">
-                </div>
-            </div>
-            <p></p>
-
-            <label for="password">Password</label>
-            <div class="field" onkeyup="criteria()">
-                <div class="control">
-                    <input type="password" id="password" name="password" placeholder="New Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="New Password">
-                </div>
-
-            <label for="password">Reenter Password</label>
-                <div class="control">
-                    <input type="password" id="pass" name="pass" placeholder="Reenter Password">
-                </div>
-            </div>
-            <p></p>
-            <button name="button" value="password">Change Password</button>
-
-        </form>
-        <div id="passmessage">
-          <h3>Password must contain the following:</h3>
-          <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
-          <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
-          <p id="number" class="invalid">A <b>number</b></p>
-          <p id="length" class="invalid">Minimum <b>8 characters</b></p>
-          <p id="match" class="invalid">Passwords must <b>match</b></p>
-        </div>
-
         <p></p>
+
+    <h2> Set Streak goal </h2>
+        <form action="" method="POST">
+            <input type="number" min="1" max="500" id="goal" name="goal" value={{current_user.streakgoal}}>
+            <button name="button" value="goal">Update Streak Goal</button>
+        </form>
+            <p></p>
+    <h2> Set Old Word Length </h2>
+    <p>The algorithm will attempt to focus words not seen in this amount of time into sentences to keep words fresh. Set to 0 for off </p>
+        <form action="" method="POST">
+            <input type="number" min="0" max="1000" id="days" name="days" value={{current_user.lemmadays}}>
+
+            <button name="button" value="days">Update Length</button>
+        </form>
+            <p></p>
+    <h2> Changing Text Font </h2>
+        <form action="" method="POST">
+            <input type="checkbox" name="font" class="font" {% if current_user.fontchange %} checked {% endif %}>
+            <button name="button" value="font">Save Font Change</button>
+        </form>
             <p></p>
     {% if lenalangs > 0 %}
     <h2> Add Language</h2>
@@ -89,18 +75,48 @@
         </form>
     {% endif %}
             <p></p>
-    <h2> Set Streak goal </h2>
-        <form action="" method="POST">
-            <input type="number" min="1" max="500" id="goal" name="goal" value={{streakgoal}}>
-            <button name="button" value="goal">Update Streak Goal</button>
-        </form>
-            <p></p>
+    
     <h2> Change Email </h2>
     <p>Your current email is {{current_user.email}}</p>
         <form action="/change" method="POST">
             <input class="input is-large" type="email" name="email" placeholder="example@domain.com">
             <button name="button" value="email">Update Email</button>
         </form>
+
+            <p></p>
+    <h2> Change Password</h2>
+        <form method="POST" action="/change">
+            <label for="ogpassword">Current Password</label>
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="ogpassword" placeholder="Current Password">
+                </div>
+            </div>
+            <p></p>
+
+            <label for="password">Password</label>
+            <div class="field" onkeyup="criteria()">
+                <div class="control">
+                    <input type="password" id="password" name="password" placeholder="New Password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="New Password">
+                </div>
+
+            <label for="password">Reenter Password</label>
+                <div class="control">
+                    <input type="password" id="pass" name="pass" placeholder="Reenter Password">
+                </div>
+            </div>
+            <p></p>
+            <button name="button" value="password">Change Password</button>
+
+        </form>
+        <div id="passmessage">
+          <h3>Password must contain the following:</h3>
+          <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
+          <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
+          <p id="number" class="invalid">A <b>number</b></p>
+          <p id="length" class="invalid">Minimum <b>8 characters</b></p>
+          <p id="match" class="invalid">Passwords must <b>match</b></p>
+        </div>
 </div>
 <script>
     var myInput = document.getElementById("password");

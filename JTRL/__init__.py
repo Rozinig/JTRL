@@ -14,6 +14,7 @@ db = SQLAlchemy()
 app = Flask(__name__)
 app.config.from_file("config.hjson", load=hjson.load)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['CAPTCHA_SECRET'] = os.environ['CAPTCHA_SECRET']
 app.config['CONTACT_EMAIL'] = { 'email':os.environ['EMAIL_ADDRESS'],'pass':os.environ['EMAIL_PASSWORD'],'server':os.environ['EMAIL_SERVER'],'port':os.environ['EMAIL_PORT']}
 db.init_app(app)
 

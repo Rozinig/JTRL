@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from .models import User, Lang
 from . import db, mail
-import json, datetime, random
+import json, datetime, random, requests
 
 config = current_app.config
 logger = current_app.logger
@@ -28,6 +28,11 @@ def signup_post():
 	password = request.form.get('password')
 	password2 = request.form.get('pass')
 	lang = request.form.get('lang')
+	key = request.form.get('h-captcha-response')
+	captchacheck = captcha(key)
+	if not captchacheck[0]:
+		flash(captchacheck[1])
+		return redirect(url_for('auth.signup'))
 
 	if (password != password2):
 		flash("Passwords don't match.")
@@ -85,6 +90,11 @@ def forgotpass():
 	test = request.form.get("button")
 	email = request.form.get("email").lower()
 	user = User.query.filter_by(email=email).first()
+	key = request.form.get('h-captcha-response')
+	captchacheck = captcha(key)
+	if not captchacheck[0]:
+		flash(captchacheck[1])
+		return redirect(url_for('auth.forgot'))
 	if (not user):
 		flash("Email not found")
 		return redirect(url_for('auth.forgot'))
@@ -143,3 +153,16 @@ def change():
 def logout():
 	logout_user()
 	return redirect(url_for('admin.home'))
+
+def captcha(key):
+	url = "https://hcaptcha.com/siteverify"
+	payload = {'secret': config['CAPTCHA_SECRET'], 'response': key, 'sitekey': config['CAPTCHA_SITEKEY'] }
+	response = requests.post(url, data=payload)
+	if response.status_code == 200:
+		test = json.loads(response.content)
+		if test['success']:
+			return True, 'success'
+		else:
+			return False, 'Captcha failed or expired.'
+	else:
+		return False, 'Connection to Captcha failed.'

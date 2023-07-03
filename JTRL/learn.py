@@ -61,9 +61,9 @@ def grammarchange():
 	flash("Grammar changes Saved.")
 	return redirect(url_for("admin.home"))
 
-@learn.route("/work/")
+@learn.route("/learn/")
 @login_required
-def work():
+def learn():
 	t = time.time()
 	text = data.nexttext(current_user)
 	if not text:
@@ -86,12 +86,12 @@ def work():
 	else:
 		streakcount = True
 	logger.info(f"total sentence load time was {time.time()-t}")
-	return render_template("work.html", text = text.text, audiofiles = files, 
+	return render_template("learn.html", text = text.text, audiofiles = files, 
 		translations=translations, senid=text.id, info=info, streakcount=streakcount)
 
-@learn.route('/work/', methods=["POST"])
+@learn.route('/learn/', methods=["POST"])
 @login_required
-def workdone():
+def learned():
 	if (current_user.streakdate == datetime.date.today()):
 		pass
 	elif (current_user.streakdate == datetime.date.today()-datetime.timedelta(days=1)):
@@ -109,4 +109,4 @@ def workdone():
 	db.session.commit()
 	textid = request.form.get("next")
 	data.recordtext(current_user, textid)
-	return redirect(url_for("learn.work"))
+	return redirect(url_for("learn.learn"))

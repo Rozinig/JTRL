@@ -19,7 +19,7 @@ class User(UserMixin, db.Model):
     currentlang_code = db.Column(db.String, db.ForeignKey('langs.code'))
     nativelang_code = db.Column(db.String, db.ForeignKey('langs.code'))
     targetlangs = db.relationship('Lang', secondary=user_targetlangs, backref = 'users')
-    settings = db.Column(db.String(1000), default='')
+    settings = db.Column(db.Text(), default='')
     created_on =db.Column(db.DateTime(), default=datetime.utcnow)
     updated_on = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     streakdays = db.Column(db.Integer(), default=0)
@@ -30,7 +30,10 @@ class User(UserMixin, db.Model):
     events = db.relationship('Event', backref='user')
     lemmas = db.relationship('Knownlemma', backref='user', cascade='all,delete-orphan')
     known_grammar = db.relationship('Knowngrammar', backref='user') 
-    text_record = db.relationship('Textrecord', backref='user') 
+    text_record = db.relationship('Textrecord', backref='user')
+    fontchange = db.Column(db.Boolean(), default=True)
+    lemmadays = db.Column(db.Integer(), default=30)
+
     def __repr__(self):
         return "<User:{}:{}>".format(self.id, self.email)
 

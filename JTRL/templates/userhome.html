@@ -11,10 +11,10 @@
             </div>
         {% endif %}
         {% endwith %}
-        <h2> Your current Streak is {{current_user.streakdays}}. </h2>
+        <h2> Your current Streak is {{current_user.streakdays}} days. </h2>
     <div>
             <p>
-                <button onclick="window.location.href='{{ url_for('learn.work') }}';">Lets Study</button>
+                <button onclick="window.location.href='{{ url_for('learn.learn') }}';">Lets Study</button>
             </p>
             <p>
                 <button onclick="window.location.href='{{ url_for('learn.addinglemma') }}';">Add Words</button>

@@ -62,4 +62,7 @@
 	'lit': 'lt', 'mkd': 'mk', 'nob': 'no', 'pol': 'pl', 'por': 'pt', 
 	'ron': 'ro', 'rus': 'ru', 'spa': 'es', 'swe': 'sv', 'ukr': 'uk'}
 
+
+	CAPTCHA_SITEKEY : 56c88c06-e5f9-42e9-a145-a9505b035952
+
 }

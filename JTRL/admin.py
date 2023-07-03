@@ -9,6 +9,7 @@ logger = current_app.logger
 
 admin = Blueprint('admin', __name__)
 from . import data
+from .auth import captcha
 
 @admin.route("/")
 @admin.route("/home")
@@ -51,6 +52,11 @@ def contacted():
 	name = request.form.get('name')
 	email = request.form.get('email').lower()
 	message = request.form.get('message')
+	key = request.form.get('h-captcha-response')
+	captchacheck = captcha(key)
+	if not captchacheck[0] and not current_user.is_authenticated:
+		flash(captchacheck[1])
+		return redirect(url_for('admin.contact'))
 	if (False): #TODO check email is email -- already kind of done in html
 		flash('Pleae enter a vaild email')
 		return redirect(url_for('admin.contact'))
@@ -78,7 +84,7 @@ def settings():
 			nlangs[lang]=config['LANGS'][lang]
 
 	return render_template("settings.html", alangs=alangs, lenalangs=len(alangs), rlangs=rlangs, lenrlangs=len(rlangs),
-		streakgoal=current_user.streakgoal, nlangs=nlangs, lennlangs=len(nlangs), nativelang=config['LANGS'][current_user.nativelang_code])
+		nlangs=nlangs, lennlangs=len(nlangs), nativelang=config['LANGS'][current_user.nativelang_code])
 
 @admin.route("/settings/", methods=['POST'])
 @login_required
@@ -89,33 +95,37 @@ def updatesettings():
 		lang = Lang.query.filter(Lang.code == lang).first()
 		current_user.targetlangs.append(lang)
 		current_user.currentlang = lang
-		db.session.commit()
 		data.pushusergrammar(current_user, data.pullusergrammar(current_user))
 		flash(f"{config['LANGS'][lang.code]} added.")
-		return redirect(url_for("admin.home"))
-	if (button == "removelang"):
+	elif (button == "removelang"):
 		lang = request.form.get('lang')
 		lang = Lang.query.filter(Lang.code == lang).first()
 		if len(current_user.targetlangs) == 1:
 			flash("You can't remove your only language.")
-			return redirect(url_for("admin.home"))
-		current_user.targetlangs.remove(lang)
-		current_user.currentlang = current_user.targetlangs[0]
-		db.session.commit()
-		flash(f"{config['LANGS'][lang.code]} removed.")
-		return redirect(url_for("admin.home"))
-	if (button == "goal"):
+		else:
+			current_user.targetlangs.remove(lang)
+			current_user.currentlang = current_user.targetlangs[0]
+			flash(f"{config['LANGS'][lang.code]} removed.")
+	elif (button == "goal"):
 		goal = request.form.get('goal')
 		current_user.streakgoal = goal
-		db.session.commit()
 		flash(f"Streak goal set to {goal}.")
-		return redirect(url_for("admin.home"))
-	if (button == "nativelang"):
+	elif (button == "nativelang"):
 		lang = request.form.get('lang')
 		current_user.nativelang_code = lang
-		db.session.commit()
 		flash(f"Your native language has been changed to {config['LANGS'][current_user.nativelang_code]}.")
-		return redirect(url_for("admin.home"))
-
-	flash("There was an error updating settings.")
+	elif (button == "days"):
+		days = request.form.get('days')
+		current_user.lemmadays = days
+		flash(f"The number of days before a word is forced to be seen has been set to {days}")
+	elif (button == 'font'):
+		font = request.form.get('font')
+		if (font == 'on'):
+			current_user.fontchange = True
+		else:
+			current_user.fontchange = False
+		flash(f"Font change was set to {font}")
+	else:
+		flash("There was an error updating settings.")
+	db.session.commit()
 	return redirect(url_for("admin.home"))
